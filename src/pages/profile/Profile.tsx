@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, ChevronRight, Grid, Shield, Upload, Download } from 'lucide-react';
 import { Header } from '@/components/ui/Header';
 import { useUserStore } from '@/store/userStore';
+import { BillImportDialog } from '@/components/bill/BillImportDialog';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { userInfo, logout } = useUserStore();
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -17,7 +19,7 @@ const Profile = () => {
   const menuGroups = [
     [
       { icon: Grid, label: '分类管理', color: 'bg-ios-orange', onClick: () => navigate('/category') },
-      { icon: Download, label: '导入数据', color: 'bg-ios-green' },
+      { icon: Download, label: '导入数据', color: 'bg-ios-green', onClick: () => setShowImportDialog(true) },
       { icon: Upload, label: '导出数据', color: 'bg-ios-blue' },
     ]
   ];
@@ -52,7 +54,7 @@ const Profile = () => {
                 <div 
                   key={idx}
                   onClick={item.onClick}
-                  className="flex items-center justify-between p-4 active:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-none"
+                  className="flex items-center justify-between p-4 active:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-none"
                 >
                   <div className="flex items-center space-x-3">
                     <div className={`p-1.5 rounded-md text-white ${item.color}`}>
@@ -78,6 +80,11 @@ const Profile = () => {
           Smart Ledger v1.0.0
         </p>
       </div>
+
+      <BillImportDialog 
+        isOpen={showImportDialog} 
+        onClose={() => setShowImportDialog(false)} 
+      />
     </div>
   );
 };

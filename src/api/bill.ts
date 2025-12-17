@@ -48,3 +48,28 @@ export const updateBill = (id: number | string, data: Partial<Bill>) => {
 export const deleteBill = (id: number | string) => {
   return request.delete(`/bills/${id}`);
 };
+
+export interface ImportBillError {
+  row: number;
+  column?: string;
+  message: string;
+  row_data?: Record<string, any>;
+}
+
+export interface ImportBillResponse {
+  total: number;
+  failed: number;
+  errors: ImportBillError[];
+}
+
+export const importBills = (file: File, parserType: string = 'vivo') => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('parser_type', parserType);
+  
+  return request.post<ImportBillResponse>('/bills/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};

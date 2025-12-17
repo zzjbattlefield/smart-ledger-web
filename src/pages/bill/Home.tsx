@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, EyeOff } from 'lucide-react';
+import { Plus, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/ui/Header';
 import { BillItem } from '@/components/bill/BillItem';
@@ -12,6 +12,8 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 
+const PAGE_SIZE = 20;
+
 const Home = () => {
   const navigate = useNavigate();
   const { userInfo } = useUserStore();
@@ -20,21 +22,29 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   
-  // Visibility state, default to true or load from local storage if needed
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  
+  // Visibility state
   const [showAmounts, setShowAmounts] = useState(true);
 
-  const fetchData = async () => {
+  // Initial Data Load
+  const initData = async () => {
     try {
       setLoading(true);
       const currentMonth = format(new Date(), 'yyyy-MM');
       
       const [billsRes, statsRes] = await Promise.all([
-        getBills({ page: 1, page_size: 50 }),
+        getBills({ page: 1, page_size: PAGE_SIZE }),
         getStatsSummary({ period: 'month', date: currentMonth })
       ]);
       
       setBills(billsRes.data.data.list);
       setStats(statsRes.data.data);
+      setHasMore(billsRes.data.data.list.length >= PAGE_SIZE);
+      setPage(1);
     } catch (error) {
       console.error('Failed to fetch data', error);
     } finally {
@@ -42,17 +52,87 @@ const Home = () => {
     }
   };
 
+  // Load More Data
+  const loadMoreBills = useCallback(async () => {
+    if (loading || !hasMore) return;
+    
+    setLoading(true);
+    try {
+      const nextPage = page + 1;
+      const res = await getBills({ page: nextPage, page_size: PAGE_SIZE });
+      const newBills = res.data.data.list;
+      
+      if (newBills.length > 0) {
+        setBills(prev => [...prev, ...newBills]);
+        setPage(nextPage);
+      }
+      
+      if (newBills.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Failed to load more bills', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, hasMore, loading]);
+
   useEffect(() => {
-    fetchData();
+    initData();
   }, []);
+
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadMoreBills();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, loading, loadMoreBills]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
+      const billToDelete = bills.find(b => b.id === deleteId);
       await deleteBill(deleteId);
-      // Optimistic update or refetch
+      
+      // Optimistic update
       setBills(prev => prev.filter(b => b.id !== deleteId));
-      // Refresh stats lightly if needed, or just let it be for now
+      
+      // Optimistic update for stats
+      if (billToDelete && stats) {
+        const currentMonth = format(new Date(), 'yyyy-MM');
+        const billMonth = format(new Date(billToDelete.pay_time), 'yyyy-MM');
+        
+        if (billMonth === currentMonth) {
+          const amount = parseFloat(billToDelete.amount);
+          setStats(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              total_expense: billToDelete.bill_type === 1 
+                ? prev.total_expense - amount 
+                : prev.total_expense,
+              total_income: billToDelete.bill_type === 2 
+                ? prev.total_income - amount 
+                : prev.total_income
+            };
+          });
+        }
+      }
     } catch (error) {
       console.error('Delete failed', error);
     }
@@ -137,38 +217,51 @@ const Home = () => {
       </div>
 
       <div className="space-y-6 mt-6">
-        {loading ? (
-          <div className="flex justify-center pt-10 text-gray-400">加载中...</div>
-        ) : groupedBills.length > 0 ? (
-          groupedBills.map(([date, items]) => (
-            <motion.div 
-              key={date}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="sticky top-14 z-30 bg-ios-background/95 backdrop-blur-sm py-2 mb-2">
-                <h3 className="text-sm font-semibold text-ios-subtext uppercase tracking-wide">
-                  {formatBillDate(date)}
-                </h3>
-              </div>
-              <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-                {items.map(bill => (
-                  <BillItem 
-                    key={bill.id} 
-                    bill={bill} 
-                    onClick={() => navigate(`/bill/detail/${bill.id}`)}
-                    onDelete={() => setDeleteId(bill.id)}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          ))
-        ) : (
+        {bills.length === 0 && !loading ? (
           <div className="flex flex-col items-center justify-center pt-20 text-ios-subtext">
             <p>本月暂无账单</p>
             <Button variant="secondary" className="mt-4" onClick={() => navigate('/bill/add')}>记一笔</Button>
           </div>
+        ) : (
+          <>
+            {groupedBills.map(([date, items]) => (
+              <motion.div 
+                key={date}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="sticky top-14 z-30 bg-ios-background/95 backdrop-blur-sm py-2 mb-2">
+                  <h3 className="text-sm font-semibold text-ios-subtext uppercase tracking-wide">
+                    {formatBillDate(date)}
+                  </h3>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-50">
+                  {items.map(bill => (
+                    <BillItem 
+                      key={bill.id} 
+                      bill={bill} 
+                      onClick={() => navigate(`/bill/detail/${bill.id}`)}
+                      onDelete={() => setDeleteId(bill.id)}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+            
+            {/* Infinite Scroll Trigger / Loading Indicator */}
+            <div ref={observerTarget} className="h-10 flex items-center justify-center w-full mt-4">
+              {loading && hasMore && (
+                <div className="flex items-center space-x-2 text-gray-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-xs">加载中...</span>
+                </div>
+              )}
+              {!hasMore && bills.length > 0 && (
+                <span className="text-xs text-gray-300">没有更多了</span>
+              )}
+            </div>
+          </>
         )}
       </div>
 
