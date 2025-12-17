@@ -11,7 +11,7 @@ interface HeaderProps {
 export const Header = ({ title, leftAction, rightAction, className }: HeaderProps) => {
   return (
     <header className={cn(
-      "fixed top-0 left-0 right-0 z-40 grid grid-cols-[1fr_auto_1fr] items-center h-14 px-4 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 transition-all",
+      "fixed top-0 left-0 right-0 z-40 grid grid-cols-[1fr_auto_1fr] items-center h-14 px-4 bg-white/80 backdrop-blur-xl border-b border-gray-100/50 transition-all",
       className
     )}>
       <div className="flex items-center justify-start">

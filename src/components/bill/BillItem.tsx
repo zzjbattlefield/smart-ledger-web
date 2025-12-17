@@ -31,7 +31,7 @@ export const BillItem = ({ bill, onClick, onDelete }: BillItemProps) => {
   };
 
   return (
-    <div className="relative overflow-hidden bg-ios-red first:rounded-t-xl last:rounded-b-xl border-b border-gray-100 last:border-none">
+    <div className="relative overflow-hidden bg-ios-red first:rounded-t-xl last:rounded-b-xl border-b border-gray-50 last:border-none">
       {/* 底层删除按钮 */}
       <motion.div 
         style={{ opacity: deleteOpacity }}

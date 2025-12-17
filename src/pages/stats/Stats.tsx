@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip } from 'recharts';
+import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip, PieChart, Pie, Cell, Sector } from 'recharts';
 import { format } from 'date-fns';
 import { Header } from '@/components/ui/Header';
 import { getStatsSummary, getCategoryStats, StatsSummary, CategoryStats } from '@/api/stats';
 import { formatCurrency } from '@/utils/date';
 import { cn } from '@/utils/cn';
 
+const COLORS = ['#007AFF', '#5856D6', '#FF9500', '#FF2D55', '#34C759', '#5AC8FA', '#AF52DE', '#FFCC00'];
+
 const Stats = () => {
   const [summary, setSummary] = useState<StatsSummary | null>(null);
   const [categories, setCategories] = useState<CategoryStats['categories']>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const fetchData = async () => {
     try {
@@ -36,7 +39,24 @@ const Stats = () => {
 
   useEffect(() => {
     fetchData();
+    setActiveIndex(null); // Reset selection on date change
   }, [currentDate]);
+
+  // Transform data for PieChart
+  const pieData = categories.map((cat, index) => ({
+    name: cat.name,
+    value: Number(cat.amount),
+    color: COLORS[index % COLORS.length]
+  })).filter(item => item.value > 0);
+
+  const onPieClick = (data: any, index: number) => {
+    // Recharts sometimes passes index in the second argument, sometimes in data.payload or data.index
+    // We prioritize the direct index argument, then fallback to data properties
+    const clickedIndex = index ?? data?.index ?? data?.payload?.index;
+    if (clickedIndex === undefined) return;
+    
+    setActiveIndex(prev => prev === clickedIndex ? null : clickedIndex);
+  };
 
   return (
     <div className="min-h-screen pt-14 pb-24 px-4 bg-ios-background">
@@ -105,6 +125,77 @@ const Stats = () => {
             )}
           </div>
 
+          {/* 支出构成饼图 */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm relative">
+             <h3 className="text-sm font-semibold text-gray-500 mb-2">支出构成</h3>
+             <div className="h-64 flex items-center justify-center relative">
+               {/* Center Info Overlay */}
+               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                 <span className="text-xs text-gray-400 mb-1">
+                   {activeIndex !== null ? pieData[activeIndex].name : '总支出'}
+                 </span>
+                 <span className="text-xl font-bold text-gray-800">
+                   {activeIndex !== null 
+                     ? formatCurrency(pieData[activeIndex].value) 
+                     : formatCurrency(summary.total_expense)}
+                 </span>
+               </div>
+
+               {pieData.length > 0 ? (
+                 <ResponsiveContainer width="100%" height="100%">
+                   <PieChart>
+	                     <Pie
+	                       // 这里用自定义 shape 来控制“点击放大/再次点击还原”，避免 Recharts 内部 tooltip 的 activeIndex 状态干扰
+	                       shape={(props: any) => {
+	                         const isActive = activeIndex !== null && props.index === activeIndex;
+	                         return (
+	                           <Sector
+	                             {...props}
+	                             outerRadius={Number(props.outerRadius) + (isActive ? 6 : 0)}
+	                           />
+	                         );
+	                       }}
+	                       onClick={onPieClick}
+	                       data={pieData}
+	                       cx="50%"
+                       cy="50%"
+                       innerRadius={60}
+                       outerRadius={80}
+                       paddingAngle={5}
+                       dataKey="value"
+                       label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, x, y }) => {
+                         return (
+                           <text 
+                             x={x} 
+                             y={y} 
+                             fill="#8E8E93" 
+                             textAnchor={x > cx ? 'start' : 'end'} 
+                             dominantBaseline="central" 
+                             fontSize={12}
+                           >
+                             {`${name} ${(percent * 100).toFixed(0)}%`}
+                           </text>
+                         );
+                       }}
+                       labelLine={{ stroke: '#E5E5EA', strokeWidth: 1 }}
+                     >
+                       {pieData.map((entry, index) => (
+                         <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={2} style={{ outline: 'none' }} />
+                       ))}
+                     </Pie>
+                     <Tooltip 
+                        contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        wrapperStyle={{ pointerEvents: 'none' }}
+                        formatter={(value: number, name: string) => [`¥${value}`, name]}
+                     />
+                   </PieChart>
+                 </ResponsiveContainer>
+               ) : (
+                 <div className="text-gray-300">暂无分类数据</div>
+               )}
+             </div>
+          </div>
+
           {/* 分类排行 */}
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <h3 className="text-sm font-semibold text-gray-500 mb-4">支出分类排行</h3>
@@ -118,11 +209,8 @@ const Stats = () => {
                     </div>
                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                       <div 
-                        className={cn(
-                          "h-full rounded-full transition-all duration-500", 
-                          idx === 0 ? "bg-ios-blue" : idx === 1 ? "bg-ios-purple" : "bg-ios-orange"
-                        )} 
-                        style={{ width: `${cat.percent}%` }} 
+                        className={cn("h-full rounded-full transition-all duration-500")} 
+                        style={{ width: `${cat.percent}%`, backgroundColor: COLORS[idx % COLORS.length] }} 
                       />
                     </div>
                   </div>

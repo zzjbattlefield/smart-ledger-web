@@ -11,7 +11,7 @@ const tabs = [
 
 const BottomTab = () => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/50 bg-white/80 pb-safe backdrop-blur-xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100/50 bg-white/80 pb-safe backdrop-blur-xl">
       <div className="flex h-16 items-center justify-around px-2">
         {tabs.map(({ path, icon: Icon, label }) => (
           <NavLink
