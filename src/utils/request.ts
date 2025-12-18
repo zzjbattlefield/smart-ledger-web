@@ -9,7 +9,7 @@ interface ApiResponse<T = any> {
 }
 
 const service = axios.create({
-  baseURL: '/v1', // 配合 vite proxy
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

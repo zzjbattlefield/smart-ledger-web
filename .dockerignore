@@ -1,0 +1,23 @@
+# 依赖目录
+node_modules
+
+# 构建输出
+dist
+
+# 开发配置
+.env.local
+*.local
+
+# 版本控制
+.git
+.gitignore
+
+# 编辑器
+.vscode
+.idea
+
+# 日志
+*.log
+
+# 测试
+coverage/

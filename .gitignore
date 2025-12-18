@@ -28,3 +28,7 @@ PROGRESS.md
 DESIGN.md
 docs/
 server.log
+
+# 部署配置
+.env.production
+deploy.sh
