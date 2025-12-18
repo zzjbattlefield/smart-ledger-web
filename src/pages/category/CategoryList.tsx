@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, Folder, Tag, ChevronLeft, ArrowUpDown, GripVertical } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, ChevronLeft, ArrowUpDown, GripVertical } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
 import { Header } from '@/components/ui/Header';
 import { Button } from '@/components/ui/Button';
@@ -10,28 +10,30 @@ import { CategoryIcon } from '@/components/ui/CategoryIcon';
 import { getCategories, createCategory, updateCategory, deleteCategory, Category } from '@/api/category';
 import { cn } from '@/utils/cn';
 
-// Category Modal (保持不变，去掉了排序输入框，因为改为拖拽了)
+// Category Modal
 const CategoryModal = ({ 
   isOpen, 
   onClose, 
   onSave, 
   initialData, 
-  parents 
+  parents,
+  currentType
 }: { 
   isOpen: boolean; 
   onClose: () => void; 
   onSave: (data: Partial<Category>) => Promise<void>;
   initialData?: Partial<Category>;
   parents: Category[];
+  currentType: 1 | 2;
 }) => {
-  const [form, setForm] = useState<Partial<Category>>({ name: '', parent_id: 0, icon: 'default' });
+  const [form, setForm] = useState<Partial<Category>>({ name: '', parent_id: 0, icon: 'default', type: currentType });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setForm(initialData || { name: '', parent_id: 0, icon: 'default' });
+      setForm(initialData || { name: '', parent_id: 0, icon: 'default', type: currentType });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, currentType]);
 
   const handleSave = async () => {
     if (!form.name) return;
@@ -102,6 +104,7 @@ const CategoryList = () => {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [isSorting, setIsSorting] = useState(false);
+  const [currentType, setCurrentType] = useState<1 | 2>(1); // 1: Expense, 2: Income
 
   // Modals state
   const [showEditModal, setShowEditModal] = useState(false);
@@ -112,7 +115,7 @@ const CategoryList = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const { data } = await getCategories();
+      const { data } = await getCategories(currentType);
       // Sort parent categories
       const sortedParents = data.data.sort((a, b) => (a.sort_order - b.sort_order));
       // Sort children
@@ -138,7 +141,7 @@ const CategoryList = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentType]);
 
   const toggleExpand = (id: number) => {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
@@ -149,7 +152,7 @@ const CategoryList = () => {
       if (data.id) {
         await updateCategory(data.id, data);
       } else {
-        await createCategory(data);
+        await createCategory({ ...data, type: currentType });
       }
       await fetchData();
     } catch (error) {
@@ -264,6 +267,24 @@ const CategoryList = () => {
           </div>
         }
       />
+      
+      {/* Type Toggle Tabs */}
+      <div className="px-4 py-2 bg-ios-background sticky top-14 z-10">
+        <div className="flex bg-gray-200 rounded-lg p-1">
+          <button 
+            className={cn("flex-1 py-1.5 text-sm font-medium rounded-md transition-all", currentType === 1 ? "bg-white shadow-sm text-gray-900" : "text-gray-500")}
+            onClick={() => setCurrentType(1)}
+          >
+            支出
+          </button>
+          <button 
+            className={cn("flex-1 py-1.5 text-sm font-medium rounded-md transition-all", currentType === 2 ? "bg-white shadow-sm text-gray-900" : "text-gray-500")}
+            onClick={() => setCurrentType(2)}
+          >
+            收入
+          </button>
+        </div>
+      </div>
 
       <div className="p-4 space-y-3">
         {loading && !isSorting ? (
@@ -357,6 +378,7 @@ const CategoryList = () => {
         onSave={handleSaveCategory}
         initialData={editingCat}
         parents={categories} 
+        currentType={currentType}
       />
 
       <Dialog 

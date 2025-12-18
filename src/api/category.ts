@@ -3,14 +3,15 @@ import request from '@/utils/request';
 export interface Category {
   id: number;
   name: string;
+  type: 1 | 2; // 1: expense, 2: income
   parent_id: number;
   icon: string;
   sort_order: number;
   children?: Category[];
 }
 
-export const getCategories = () => {
-  return request.get<Category[]>('/categories');
+export const getCategories = (type?: 1 | 2) => {
+  return request.get<Category[]>('/categories', { params: { type } });
 };
 
 export const createCategory = (data: Partial<Category>) => {

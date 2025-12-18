@@ -5,6 +5,7 @@ export interface RecognizeResponse {
   platform: string;
   amount: number;
   merchant: string;
+  bill_type: 1 | 2;
   category: string; // Returns category name, need to map to ID
   sub_category: string;
   pay_time: string;

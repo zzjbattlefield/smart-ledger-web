@@ -26,6 +26,7 @@ interface QueueItem {
     pay_time: string;
     category_id: number;
     categoryName: string;
+    bill_type: 1 | 2;
   };
 }
 
@@ -70,6 +71,7 @@ const AddBill = () => {
     pay_time: getCurrentTimeStr(),
     category_id: 1,
     categoryName: '餐饮',
+    bill_type: 1 as const,
   });
 
   // Handle Manual Entry Add
@@ -130,7 +132,8 @@ const AddBill = () => {
              pay_time: savedBill.pay_time ? format(new Date(savedBill.pay_time), "yyyy-MM-dd'T'HH:mm:ss") : getCurrentTimeStr(),
              remark: savedBill.remark || '',
              category_id: savedBill.category?.id || 1,
-             categoryName: savedBill.category?.name || '餐饮'
+             categoryName: savedBill.category?.name || '餐饮',
+             bill_type: savedBill.bill_type || 1,
            };
            
            // Logic: If multiple items, keep in queue as completed. If single, return.
@@ -169,6 +172,7 @@ const AddBill = () => {
             remark: `${res.platform || ''} - ${res.items?.[0]?.name || ''}`,
             category_id: 1, // 暂无法从名称反推ID，后续可优化
             categoryName: res.category || '餐饮', // AI 返回的分类名
+            bill_type: (res.bill_type as 1 | 2) || 1,
           };
 
           // Update to success and wait for user confirmation
@@ -213,6 +217,21 @@ const AddBill = () => {
     ));
   };
 
+  const handleTypeChange = (type: 1 | 2) => {
+    if (!activeId || activeItem?.form.bill_type === type) return;
+    setQueue(prev => prev.map(item => 
+        item.id === activeId ? { 
+            ...item, 
+            form: { 
+                ...item.form, 
+                bill_type: type,
+                category_id: 0,
+                categoryName: '请选择分类' 
+            } 
+        } : item
+    ));
+  };
+
   const handleSaveCurrent = async () => {
     if (!activeItem || !activeItem.form.amount) return;
     
@@ -235,7 +254,7 @@ const AddBill = () => {
           pay_time: toLocalISOString(activeItem.form.pay_time),
           uuid: crypto.randomUUID(),
           platform: activeItem.file ? 'AI/ManualConfirm' : 'Manual',
-          bill_type: 1,
+          bill_type: activeItem.form.bill_type,
           category: { id: activeItem.form.category_id, name: 'General', icon: 'food' }
         });
         savedBill = data.data;
@@ -396,6 +415,21 @@ const AddBill = () => {
 
             {/* Form Fields */}
             <div className="space-y-6 pb-24">
+              
+              {/* Type Switcher */}
+              <div className="flex justify-center">
+                <div className="bg-gray-100 p-1 rounded-xl flex space-x-1">
+                   <button
+                     onClick={() => handleTypeChange(1)}
+                     className={cn("px-6 py-2 rounded-lg text-sm font-medium transition-all", activeItem.form.bill_type === 1 ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700")}
+                   >支出</button>
+                   <button
+                     onClick={() => handleTypeChange(2)}
+                     className={cn("px-6 py-2 rounded-lg text-sm font-medium transition-all", activeItem.form.bill_type === 2 ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700")}
+                   >收入</button>
+                </div>
+              </div>
+
               <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                 <div className="relative">
                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">金额</label>
@@ -503,7 +537,9 @@ const AddBill = () => {
                    <span className="text-xs font-bold text-ios-blue truncate w-full text-center px-0.5">
                      {item.form.amount ? `¥${item.form.amount}` : '新账单'}
                    </span>
-                   <span className="text-[10px] text-ios-blue/60 scale-75 transform -mt-0.5">手动</span>
+                   <span className="text-xs text-ios-blue/60 scale-75 transform -mt-0.5">
+                      {item.form.bill_type === 1 ? '支' : '收'}
+                   </span>
                  </div>
                )}
                
@@ -550,6 +586,7 @@ const AddBill = () => {
         isOpen={showCategoryPicker}
         onClose={() => setShowCategoryPicker(false)}
         selectedId={activeItem?.form.category_id || 0}
+        type={activeItem?.form.bill_type}
         onSelect={(cat) => {
           updateForm('category_id', cat.id);
           updateForm('categoryName', cat.name);

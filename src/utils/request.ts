@@ -42,14 +42,15 @@ service.interceptors.request.use(
 );
 
 // 响应拦截器
+const UNAUTHORIZED_CODES = [20001, 20002, 20003, 30001];
+
 service.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     const res = response.data;
     // 根据后端约定，code === 0 代表成功
     if (res.code !== 0) {
       // 处理 Token 过期/无效等情况
-      // 20001: 未授权, 20002: Token过期, 20003: Token无效, 30001: 用户不存在
-      if ([20001, 20002, 20003, 30001].includes(res.code)) {
+      if (UNAUTHORIZED_CODES.includes(res.code)) {
         handleUnauthorized();
         // 返回一个被拒绝的 Promise，中断后续业务逻辑
         return Promise.reject(new Error(res.message || 'Unauthorized'));
@@ -63,8 +64,13 @@ service.interceptors.response.use(
   },
   (error: AxiosError) => {
     // 处理 HTTP 状态码错误
-    if (error.response && error.response.status === 401) {
-      handleUnauthorized();
+    if (error.response) {
+      // 尝试解析响应体中的业务错误码
+      const res = error.response.data as ApiResponse | undefined;
+      
+      if (error.response.status === 401 || (res && UNAUTHORIZED_CODES.includes(res.code))) {
+        handleUnauthorized();
+      }
     }
     
     console.error('Request Error:', error);

@@ -8,16 +8,17 @@ interface CategoryPickerProps {
   isOpen: boolean;
   onClose: () => void;
   selectedId: number;
+  type?: 1 | 2; // Add type prop
   onSelect: (category: Category) => void;
 }
 
-export const CategoryPicker = ({ isOpen, onClose, selectedId, onSelect }: CategoryPickerProps) => {
+export const CategoryPicker = ({ isOpen, onClose, selectedId, type, onSelect }: CategoryPickerProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeParentId, setActiveParentId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      getCategories().then(res => {
+      getCategories(type).then(res => { // Pass type to getCategories
         setCategories(res.data.data);
         // 如果已选中的是子分类，自动展开父分类
         const flatCats = res.data.data;
