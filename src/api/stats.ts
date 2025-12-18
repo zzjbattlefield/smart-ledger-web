@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request, { ApiResponse } from '@/utils/request';
 
 export interface StatsSummary {
   period: string;
@@ -29,9 +29,9 @@ export interface CategoryStats {
 }
 
 export const getStatsSummary = (params: { period: 'month' | 'week' | 'day' | 'year'; date: string }) => {
-  return request.get<StatsSummary>('/stats/summary', { params });
+  return request.get<ApiResponse<StatsSummary>>('/stats/summary', { params });
 };
 
 export const getCategoryStats = (params: { period: 'month' | 'week' | 'day' | 'year'; date: string }) => {
-  return request.get<CategoryStats>('/stats/category', { params });
+  return request.get<ApiResponse<CategoryStats>>('/stats/category', { params });
 };

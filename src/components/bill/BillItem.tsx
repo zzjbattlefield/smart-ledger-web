@@ -1,4 +1,3 @@
-import React, { useRef } from 'react';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { Bill } from '@/api/bill';
@@ -16,9 +15,8 @@ export const BillItem = ({ bill, onClick, onDelete }: BillItemProps) => {
   const isExpense = bill.bill_type === 1;
   const x = useMotionValue(0);
   const deleteOpacity = useTransform(x, [-50, -100], [0, 1]);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     // 如果向左拖拽超过 80px，或者速度很快，虽然这里我们不自动触发删除，
     // 而是让用户点击红色按钮，或者保持展开状态（类似 iOS）。
     // 简单起见：如果超过阈值，保持展开；否则回弹。

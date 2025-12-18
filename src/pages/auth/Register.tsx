@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -13,7 +13,7 @@ const Register = () => {
   const [form, setForm] = useState({ phone: '', password: '', nickname: '' });
   const [error, setError] = useState('');
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.phone || !form.password) {
       setError('请填写所有必填项');

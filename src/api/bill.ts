@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request, { ApiResponse } from '@/utils/request';
 
 export interface Bill {
   id: number;
@@ -7,6 +7,8 @@ export interface Bill {
   bill_type: 1 | 2; // 1: expense, 2: income
   platform: string;
   merchant: string;
+  category_id?: number;
+  order_no?: string;
   category: {
     id: number;
     name: string;
@@ -30,19 +32,19 @@ interface BillListResponse {
 }
 
 export const getBills = (params: BillListParams) => {
-  return request.get<BillListResponse>('/bills', { params });
+  return request.get<ApiResponse<BillListResponse>>('/bills', { params });
 };
 
 export const createBill = (data: Partial<Bill>) => {
-  return request.post<Bill>('/bills', data);
+  return request.post<ApiResponse<Bill>>('/bills', data);
 };
 
 export const getBillDetail = (id: number | string) => {
-  return request.get<Bill>(`/bills/${id}`);
+  return request.get<ApiResponse<Bill>>(`/bills/${id}`);
 };
 
 export const updateBill = (id: number | string, data: Partial<Bill>) => {
-  return request.put<Bill>(`/bills/${id}`, data);
+  return request.put<ApiResponse<Bill>>(`/bills/${id}`, data);
 };
 
 export const deleteBill = (id: number | string) => {
@@ -67,7 +69,7 @@ export const importBills = (file: File, parserType: string = 'vivo') => {
   formData.append('file', file);
   formData.append('parser_type', parserType);
   
-  return request.post<ImportBillResponse>('/bills/import', formData, {
+  return request.post<ApiResponse<ImportBillResponse>>('/bills/import', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

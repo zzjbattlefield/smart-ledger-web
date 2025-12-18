@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request, { ApiResponse } from '@/utils/request';
 import { Bill } from './bill';
 
 export interface RecognizeResponse {
@@ -18,7 +18,7 @@ export interface RecognizeResponse {
 export const recognizeBill = (file: File) => {
   const formData = new FormData();
   formData.append('image', file);
-  return request.post<RecognizeResponse>('/ai/recognize', formData, {
+  return request.post<ApiResponse<RecognizeResponse>>('/ai/recognize', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -29,7 +29,7 @@ export const recognizeBill = (file: File) => {
 export const recognizeAndSaveBill = (file: File) => {
   const formData = new FormData();
   formData.append('image', file);
-  return request.post<Bill>('/ai/recognize-and-save', formData, {
+  return request.post<ApiResponse<Bill>>('/ai/recognize-and-save', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

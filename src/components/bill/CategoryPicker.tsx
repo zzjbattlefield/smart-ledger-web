@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronRight, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { getCategories, Category } from '@/api/category';
 import { cn } from '@/utils/cn';
 

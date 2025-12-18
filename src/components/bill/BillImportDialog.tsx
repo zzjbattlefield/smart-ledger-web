@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { importBills, ImportBillResponse, ImportBillError } from '@/api/bill';
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, ChevronRight, Download } from 'lucide-react';
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, ChevronRight } from 'lucide-react';
 import { BillEditDialog } from './BillEditDialog';
 
 interface BillImportDialogProps {

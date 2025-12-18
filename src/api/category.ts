@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request, { ApiResponse } from '@/utils/request';
 
 export interface Category {
   id: number;
@@ -11,15 +11,15 @@ export interface Category {
 }
 
 export const getCategories = (type?: 1 | 2) => {
-  return request.get<Category[]>('/categories', { params: { type } });
+  return request.get<ApiResponse<Category[]>>('/categories', { params: { type } });
 };
 
 export const createCategory = (data: Partial<Category>) => {
-  return request.post<Category>('/categories', data);
+  return request.post<ApiResponse<Category>>('/categories', data);
 };
 
 export const updateCategory = (id: number, data: Partial<Category>) => {
-  return request.put<Category>(`/categories/${id}`, data);
+  return request.put<ApiResponse<Category>>(`/categories/${id}`, data);
 };
 
 export const deleteCategory = (id: number) => {

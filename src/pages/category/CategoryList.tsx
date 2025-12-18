@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, ChevronLeft, ArrowUpDown, GripVertical } from 'lucide-react';
-import { Reorder, useDragControls } from 'framer-motion';
+import { Reorder } from 'framer-motion';
 import { Header } from '@/components/ui/Header';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
@@ -86,17 +86,7 @@ const CategoryModal = ({
 };
 
 // 拖拽手柄组件
-const DragHandle = () => {
-  const controls = useDragControls();
-  return (
-    <div 
-      onPointerDown={(e) => controls.start(e)}
-      className="p-2 text-gray-300 cursor-grab active:cursor-grabbing touch-none"
-    >
-      <GripVertical size={20} />
-    </div>
-  );
-};
+// const DragHandle = () => { ... } // Removed unused component
 
 const CategoryList = () => {
   const navigate = useNavigate();
@@ -117,11 +107,11 @@ const CategoryList = () => {
       setLoading(true);
       const { data } = await getCategories(currentType);
       // Sort parent categories
-      const sortedParents = data.data.sort((a, b) => (a.sort_order - b.sort_order));
+      const sortedParents = data.data.sort((a: Category, b: Category) => (a.sort_order - b.sort_order));
       // Sort children
-      sortedParents.forEach(p => {
+      sortedParents.forEach((p: Category) => {
         if (p.children) {
-          p.children.sort((a, b) => (a.sort_order - b.sort_order));
+          p.children.sort((a: Category, b: Category) => (a.sort_order - b.sort_order));
         }
       });
       setCategories(sortedParents);
@@ -129,7 +119,7 @@ const CategoryList = () => {
       // Default expand all
       if (Object.keys(expanded).length === 0) {
         const expandMap: Record<number, boolean> = {};
-        data.data.forEach(c => expandMap[c.id] = true);
+        data.data.forEach((c: Category) => expandMap[c.id] = true);
         setExpanded(expandMap);
       }
     } catch (error) {
@@ -188,15 +178,7 @@ const CategoryList = () => {
   };
 
   // 批量更新排序到服务器
-  const saveOrder = async (cats: Category[]) => {
-    // 简单策略：遍历更新所有受影响的 sort_order
-    // 实际优化：只更新变化的。这里为了逻辑简单，循环调用 update
-    // 更好的后端API是支持 batch update sort_order
-    
-    // 这里我们只在前端状态变更，实际保存可以留给"退出排序模式"或Debounce
-    // 为了即时性，我们这里只更新前端state。
-    // 真正的保存逻辑放在 toggle isSorting 关闭时
-  };
+  // const saveOrder = async (cats: Category[]) => { ... } // Removed unused function
 
   const handleReorderParents = (newOrder: Category[]) => {
     setCategories(newOrder);

@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, PieChart, User } from 'lucide-react';
 import { cn } from '@/utils/cn';

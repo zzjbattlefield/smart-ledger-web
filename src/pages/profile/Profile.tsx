@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ChevronRight, Grid, Shield, Upload, Download } from 'lucide-react';
+import { ChevronRight, Grid, Upload, Download } from 'lucide-react';
 import { Header } from '@/components/ui/Header';
 import { useUserStore } from '@/store/userStore';
 import { BillImportDialog } from '@/components/bill/BillImportDialog';

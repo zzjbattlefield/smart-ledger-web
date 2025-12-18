@@ -1,4 +1,4 @@
-import request from '@/utils/request';
+import request, { ApiResponse } from '@/utils/request';
 
 export interface AuthResponse {
   token: string;
@@ -12,9 +12,9 @@ export interface AuthResponse {
 }
 
 export const login = (data: { phone: string; password: string }) => {
-  return request.post<AuthResponse>('/user/login', data);
+  return request.post<ApiResponse<AuthResponse>>('/user/login', data);
 };
 
 export const register = (data: { phone: string; password: string; nickname?: string }) => {
-  return request.post<AuthResponse>('/user/register', data);
+  return request.post<ApiResponse<AuthResponse>>('/user/register', data);
 };

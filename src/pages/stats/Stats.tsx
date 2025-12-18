@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip, PieChart, Pie, Cell, Sector } from 'recharts';
 import { format } from 'date-fns';
 import { Header } from '@/components/ui/Header';
@@ -163,7 +163,7 @@ const Stats = () => {
                        outerRadius={80}
                        paddingAngle={5}
                        dataKey="value"
-                       label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, x, y }) => {
+                       label={({ cx, x, y, name, percent }) => {
                          return (
                            <text 
                              x={x} 
@@ -173,7 +173,7 @@ const Stats = () => {
                              dominantBaseline="central" 
                              fontSize={12}
                            >
-                             {`${name} ${(percent * 100).toFixed(0)}%`}
+                             {`${name} ${((percent || 0) * 100).toFixed(0)}%`}
                            </text>
                          );
                        }}

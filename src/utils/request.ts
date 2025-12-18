@@ -2,7 +2,7 @@ import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'ax
 import { useUserStore } from '../store/userStore';
 
 // 定义 API 响应的通用结构
-interface ApiResponse<T = any> {
+export interface ApiResponse<T = any> {
   code: number;
   message: string;
   data: T;

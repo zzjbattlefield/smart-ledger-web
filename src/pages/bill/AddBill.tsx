@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, Check, Camera, Loader2, ImagePlus, ChevronLeft, Trash2, Keyboard, RefreshCcw, AlertCircle, ChevronRight } from 'lucide-react';
+import { Check, Camera, Loader2, ImagePlus, Trash2, Keyboard, RefreshCcw, AlertCircle, ChevronRight } from 'lucide-react';
 import { Header } from '@/components/ui/Header';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CategoryPicker } from '@/components/bill/CategoryPicker';
 import { recognizeBill, recognizeAndSaveBill, RecognizeResponse } from '@/api/ai';
-import { createBill, updateBill } from '@/api/bill';
+import { createBill, updateBill, Bill } from '@/api/bill';
 import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
 import { toLocalISOString } from '@/utils/date';
@@ -117,7 +116,7 @@ const AddBill = () => {
       try {
         if (!item.file) throw new Error("No file");
         
-        let savedBill = null;
+        let savedBill: Bill | null = null;
         let formToUpdate = null;
 
         if (autoSubmit) {
@@ -148,7 +147,7 @@ const AddBill = () => {
              const nextQueue = prev.map(i => i.id === item.id ? { 
                ...i, 
                status: 'completed' as const, 
-               billId: savedBill.id,
+               billId: savedBill!.id,
                form: formToUpdate!
              } : i);
              

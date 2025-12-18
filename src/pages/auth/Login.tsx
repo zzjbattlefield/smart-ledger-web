@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -13,7 +13,7 @@ const Login = () => {
   const [form, setForm] = useState({ phone: '', password: '' });
   const [error, setError] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.phone || !form.password) {
       setError('请填写所有必填项');
@@ -51,7 +51,7 @@ const Login = () => {
     visible: { 
       opacity: 1, 
       y: 0,
-      transition: { duration: 0.5, ease: "easeOut" }
+      transition: { duration: 0.5 }
     }
   };
 

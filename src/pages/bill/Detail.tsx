@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { Pencil, Trash2, ChevronLeft, CreditCard, Calendar, Tag, FileText, Loader2, ListTree } from 'lucide-react';
 import { Header } from '@/components/ui/Header';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Dialog } from '@/components/ui/Dialog';
 import { CategoryPicker } from '@/components/bill/CategoryPicker';
 import { getBillDetail, deleteBill, updateBill, Bill } from '@/api/bill';
