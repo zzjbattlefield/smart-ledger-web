@@ -29,7 +29,7 @@ const Login = () => {
       localStorage.setItem('token', data.data.token);
       navigate('/home', { replace: true });
     } catch (err: any) {
-      setError(err.response?.data?.message || '登录失败，请重试');
+      setError(err.response?.data?.message || err.message || '登录失败，请重试');
     } finally {
       setLoading(false);
     }

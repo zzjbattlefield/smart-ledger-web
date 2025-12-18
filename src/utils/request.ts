@@ -21,7 +21,9 @@ const handleUnauthorized = () => {
   const { logout } = useUserStore.getState();
   logout();
   localStorage.removeItem('token');
-  window.location.href = '/login';
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
 };
 
 // 请求拦截器
