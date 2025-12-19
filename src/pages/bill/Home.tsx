@@ -1,14 +1,16 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/ui/Header';
 import { BillItem } from '@/components/bill/BillItem';
-import { getBills, deleteBill, Bill } from '@/api/bill';
+import { CategoryFilter } from '@/components/bill/CategoryFilter';
+import { getBills, deleteBill, Bill, BillListParams, BillListResponse } from '@/api/bill';
 import { getStatsSummary, StatsSummary } from '@/api/stats';
+import { ApiResponse } from '@/utils/request';
 import { useUserStore } from '@/store/userStore';
+import { useBillStore } from '@/store/billStore';
 import { formatBillDate, formatCurrency } from '@/utils/date';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 
@@ -17,91 +19,109 @@ const PAGE_SIZE = 20;
 const Home = () => {
   const navigate = useNavigate();
   const { userInfo } = useUserStore();
-  const [bills, setBills] = useState<Bill[]>([]);
-  const [stats, setStats] = useState<StatsSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const { 
+    bills, stats, page, hasMore, filters, scrollPosition,
+    setBills, appendBills, setStats, setPage, setHasMore, setFilters, setScrollPosition 
+  } = useBillStore();
   
-  // Pagination State
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
   
   // Visibility state
   const [showAmounts, setShowAmounts] = useState(true);
 
-  // Initial Data Load
-  const initData = async () => {
+  // Restore scroll position
+  useLayoutEffect(() => {
+    window.scrollTo(0, scrollPosition);
+  }, [scrollPosition]);
+
+  // Save scroll position on unmount
+  useEffect(() => {
+    return () => {
+      setScrollPosition(window.scrollY);
+    };
+  }, [setScrollPosition]);
+
+  // Fetch Data
+  const fetchData = useCallback(async (pageNum: number, isRefresh: boolean) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const currentMonth = format(new Date(), 'yyyy-MM');
+      const params: BillListParams = { 
+        page: pageNum, 
+        page_size: PAGE_SIZE,
+        date: filters.date 
+      };
       
-      const [billsRes, statsRes] = await Promise.all([
-        getBills({ page: 1, page_size: PAGE_SIZE }),
-        getStatsSummary({ period: 'month', date: currentMonth })
-      ]);
+      if (filters.categoryId) {
+        params.category_id = filters.categoryId;
+      }
+
+      const requests: Promise<unknown>[] = [getBills(params)];
+      // Only fetch stats if refreshing (page 1)
+      if (isRefresh) {
+        requests.push(getStatsSummary({ period: 'month', date: filters.date }));
+      }
+
+      const results = await Promise.all(requests);
+      const billsRes = results[0] as { data: ApiResponse<BillListResponse> };
+      const statsRes = isRefresh ? (results[1] as { data: ApiResponse<StatsSummary> }) : null;
       
-      setBills(billsRes.data.data.list);
-      setStats(statsRes.data.data);
-      setHasMore(billsRes.data.data.list.length >= PAGE_SIZE);
-      setPage(1);
+      const newBills = billsRes.data.data.list;
+      
+      if (isRefresh) {
+        setBills(newBills);
+        if (statsRes) {
+          setStats(statsRes.data.data);
+        }
+      } else {
+        appendBills(newBills);
+      }
+      
+      setHasMore(newBills.length >= PAGE_SIZE);
+      setPage(pageNum);
     } catch (error) {
       console.error('Failed to fetch data', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, setBills, appendBills, setStats, setPage, setHasMore]);
+
+  // Initial Data Load (only if empty) or when filters change
+  useEffect(() => {
+    if (bills.length === 0) {
+      fetchData(1, true);
+    }
+  }, [filters, bills.length, fetchData]); 
 
   // Load More Data
-  const loadMoreBills = useCallback(async () => {
+  const loadMoreBills = useCallback(() => {
     if (loading || !hasMore) return;
-    
-    setLoading(true);
-    try {
-      const nextPage = page + 1;
-      const res = await getBills({ page: nextPage, page_size: PAGE_SIZE });
-      const newBills = res.data.data.list;
-      
-      if (newBills.length > 0) {
-        setBills(prev => [...prev, ...newBills]);
-        setPage(nextPage);
-      }
-      
-      if (newBills.length < PAGE_SIZE) {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error('Failed to load more bills', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, hasMore, loading]);
-
-  useEffect(() => {
-    initData();
-  }, []);
+    fetchData(page + 1, false);
+  }, [page, hasMore, loading, fetchData]);
 
   // Intersection Observer for Infinite Scroll
   useEffect(() => {
+    const currentTarget = observerTarget.current;
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
+        if (entries[0].isIntersecting && hasMore && !loading && bills.length > 0) {
           loadMoreBills();
         }
       },
       { threshold: 0.1 }
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
       }
     };
-  }, [hasMore, loading, loadMoreBills]);
+  }, [hasMore, loading, loadMoreBills, bills.length]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -110,34 +130,26 @@ const Home = () => {
       await deleteBill(deleteId);
       
       // Optimistic update
-      setBills(prev => prev.filter(b => b.id !== deleteId));
+      const newBills = bills.filter(b => b.id !== deleteId);
+      setBills(newBills);
       
       // Optimistic update for stats
       if (billToDelete && stats) {
-        const currentMonth = format(new Date(), 'yyyy-MM');
-        const billMonth = format(new Date(billToDelete.pay_time), 'yyyy-MM');
-        
-        if (billMonth === currentMonth) {
-          const amount = parseFloat(billToDelete.amount);
-          setStats(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              total_expense: billToDelete.bill_type === 1 
-                ? prev.total_expense - amount 
-                : prev.total_expense,
-              total_income: billToDelete.bill_type === 2 
-                ? prev.total_income - amount 
-                : prev.total_income
-            };
-          });
-        }
+        const amount = parseFloat(billToDelete.amount);
+        setStats({
+          ...stats,
+          total_expense: billToDelete.bill_type === 1 
+            ? stats.total_expense - amount 
+            : stats.total_expense,
+          total_income: billToDelete.bill_type === 2 
+            ? stats.total_income - amount 
+            : stats.total_income
+        });
       }
     } catch (error) {
       console.error('Delete failed', error);
     }
   };
-
 
   // Group bills by date
   const groupedBills = useMemo(() => {
@@ -160,6 +172,10 @@ const Home = () => {
     if (hour < 18) return `下午好，${nickname}`;
     return `晚上好，${nickname}`;
   }, [userInfo]);
+
+  const handleFilterSelect = (id: number | null) => {
+    setFilters({ categoryId: id });
+  };
 
   return (
     <div className="min-h-screen pt-14 px-4 pb-20 bg-ios-background">
@@ -195,7 +211,7 @@ const Home = () => {
            <div className="flex flex-col">
              <span className="text-blue-100 text-xs font-medium mb-1">本月总支出</span>
              <span className="text-3xl font-bold tracking-tight">
-               {showAmounts ? (stats ? formatCurrency(stats.total_expense) : '...') : '****'}
+               {showAmounts ? (stats ? formatCurrency(stats.total_expense) : '0.00') : '****'}
              </span>
            </div>
            
@@ -203,23 +219,28 @@ const Home = () => {
              <div>
                <span className="text-blue-100 text-xs block mb-1">本月收入</span>
                <span className="text-lg font-semibold">
-                 {showAmounts ? (stats ? formatCurrency(stats.total_income) : '...') : '****'}
+                 {showAmounts ? (stats ? formatCurrency(stats.total_income) : '0.00') : '****'}
                </span>
              </div>
              <div className="text-right">
                <span className="text-blue-100 text-xs block mb-1">结余</span>
                 <span className="text-lg font-semibold">
-                 {showAmounts ? (stats ? formatCurrency(stats.total_income - stats.total_expense) : '...') : '****'}
+                 {showAmounts ? (stats ? formatCurrency(stats.total_income - stats.total_expense) : '0.00') : '****'}
                </span>
              </div>
            </div>
         </div>
       </div>
+      
+      {/* Category Filter */}
+      <div className="mt-6">
+        <CategoryFilter selectedId={filters.categoryId} onSelect={handleFilterSelect} />
+      </div>
 
-      <div className="space-y-6 mt-6">
+      <div className="space-y-6 mt-4">
         {bills.length === 0 && !loading ? (
           <div className="flex flex-col items-center justify-center pt-20 text-ios-subtext">
-            <p>本月暂无账单</p>
+            <p>没有找到相关账单</p>
             <Button variant="secondary" className="mt-4" onClick={() => navigate('/bill/add')}>记一笔</Button>
           </div>
         ) : (

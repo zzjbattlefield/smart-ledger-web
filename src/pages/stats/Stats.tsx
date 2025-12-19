@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip, PieChart, Pie, Cell, Sector } from 'recharts';
 import { format } from 'date-fns';
 import { Header } from '@/components/ui/Header';
@@ -15,7 +15,7 @@ const Stats = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const dateParam = format(currentDate, 'yyyy-MM'); // 默认按月统计
@@ -35,12 +35,12 @@ const Stats = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentDate]);
 
   useEffect(() => {
     fetchData();
     setActiveIndex(null); // Reset selection on date change
-  }, [currentDate]);
+  }, [currentDate, fetchData]);
 
   // Transform data for PieChart
   const pieData = categories.map((cat, index) => ({
@@ -49,6 +49,7 @@ const Stats = () => {
     color: COLORS[index % COLORS.length]
   })).filter(item => item.value > 0);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onPieClick = (data: any, index: number) => {
     // Recharts sometimes passes index in the second argument, sometimes in data.payload or data.index
     // We prioritize the direct index argument, then fallback to data properties
@@ -146,6 +147,7 @@ const Stats = () => {
                    <PieChart>
 	                     <Pie
 	                       // 这里用自定义 shape 来控制“点击放大/再次点击还原”，避免 Recharts 内部 tooltip 的 activeIndex 状态干扰
+	                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
 	                       shape={(props: any) => {
 	                         const isActive = activeIndex !== null && props.index === activeIndex;
 	                         return (

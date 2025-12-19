@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { CategoryPicker } from '@/components/bill/CategoryPicker';
 import { recognizeBill, recognizeAndSaveBill, RecognizeResponse } from '@/api/ai';
 import { createBill, updateBill, Bill } from '@/api/bill';
+import { useBillStore } from '@/store/billStore';
 import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
 import { toLocalISOString } from '@/utils/date';
@@ -42,6 +43,7 @@ const Switch = ({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 const AddBill = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setFilters } = useBillStore(); // Access store to reset list
   
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -122,7 +124,10 @@ const AddBill = () => {
         if (autoSubmit) {
            // Auto Submit Mode: Direct recognize-and-save
            const { data } = await recognizeAndSaveBill(item.file);
-           savedBill = data.data; 
+           savedBill = data.data;
+           
+           // Reset list in store so it re-fetches on return
+           setFilters({}); 
            
            // Construct form from saved data
            formToUpdate = {
@@ -199,7 +204,7 @@ const AddBill = () => {
     if (nextItem) {
       processItem(nextItem);
     }
-  }, [queue, autoSubmit, navigate]);
+  }, [queue, autoSubmit, navigate, setFilters, activeId]);
 
   // Handle Retry
   const handleRetry = (e: React.MouseEvent, id: string) => {
@@ -209,7 +214,7 @@ const AddBill = () => {
     ));
   };
 
-  const updateForm = (field: keyof QueueItem['form'], value: any) => {
+  const updateForm = (field: keyof QueueItem['form'], value: string | number) => {
     if (!activeId) return;
     setQueue(prev => prev.map(item => 
       item.id === activeId ? { ...item, form: { ...item.form, [field]: value } } : item
@@ -258,6 +263,9 @@ const AddBill = () => {
         });
         savedBill = data.data;
       }
+      
+      // Reset list in store so it re-fetches on return
+      setFilters({});
 
       setQueue(prev => {
         if (prev.length === 1) {

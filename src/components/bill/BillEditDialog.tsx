@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 interface BillEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  initialData: Record<string, any>;
+  initialData: Record<string, string | number>;
   onSuccess: () => void;
 }
 
@@ -33,13 +33,13 @@ export const BillEditDialog = ({ isOpen, onClose, initialData, onSuccess }: Bill
   useEffect(() => {
     if (isOpen && initialData) {
       // Basic mapping strategy for Vivo/Common exports
-      const amount = initialData['交易金额'] || initialData['金额'] || '';
-      const timeStr = initialData['交易时间'] || initialData['时间'] || '';
-      const typeStr = initialData['收支类型'] || initialData['类型'] || '';
-      const merchant = initialData['交易对方'] || initialData['商户'] || initialData['商品说明'] || ''; // Vivo uses 商品说明 often for merchant-like info if 商户 is missing
-      const remark = initialData['备注'] || '';
-      const orderNo = initialData['交易单号'] || initialData['订单号'] || '';
-      const categoryName = initialData['记账分类'] || '餐饮';
+      const amount = String(initialData['交易金额'] || initialData['金额'] || '');
+      const timeStr = String(initialData['交易时间'] || initialData['时间'] || '');
+      const typeStr = String(initialData['收支类型'] || initialData['类型'] || '');
+      const merchant = String(initialData['交易对方'] || initialData['商户'] || initialData['商品说明'] || ''); 
+      const remark = String(initialData['备注'] || '');
+      const orderNo = String(initialData['交易单号'] || initialData['订单号'] || '');
+      const categoryName = String(initialData['记账分类'] || '餐饮');
 
       // Parse Time
       let formattedTime = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");

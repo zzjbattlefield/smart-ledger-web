@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Pencil, Trash2, ChevronLeft, CreditCard, Calendar, Tag, FileText, Loader2, ListTree } from 'lucide-react';
@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { CategoryPicker } from '@/components/bill/CategoryPicker';
 import { getBillDetail, deleteBill, updateBill, Bill } from '@/api/bill';
+import { useBillStore } from '@/store/billStore';
 import { formatCurrency, toLocalISOString } from '@/utils/date';
 import { cn } from '@/utils/cn';
 
 const BillDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { updateBill: updateBillInStore, removeBill } = useBillStore();
   const [bill, setBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -25,7 +27,7 @@ const BillDetail = () => {
   const [editForm, setEditForm] = useState<Partial<Bill>>({});
   const [saving, setSaving] = useState(false);
 
-  const fetchDetail = async () => {
+  const fetchDetail = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await getBillDetail(id!);
@@ -36,15 +38,16 @@ const BillDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) fetchDetail();
-  }, [id]);
+  }, [id, fetchDetail]);
 
   const handleDelete = async () => {
     try {
       await deleteBill(id!);
+      removeBill(Number(id)); // Remove from store
       navigate(-1);
     } catch (error) {
       console.error('删除失败', error);
@@ -61,9 +64,16 @@ const BillDetail = () => {
         category_id: editForm.category?.id || bill?.category.id
       };
       
-      await updateBill(id!, payload);
-      // 重新获取最新详情，因为分类对象可能需要从后端更新
-      await fetchDetail();
+      const { data } = await updateBill(id!, payload);
+      const updatedBill = data.data;
+
+      // Update local state
+      setBill(updatedBill);
+      setEditForm(updatedBill);
+      
+      // Update global store state so list is fresh when returning
+      updateBillInStore(Number(id), updatedBill);
+
       setIsEditing(false);
     } catch (error) {
       console.error('更新失败', error);

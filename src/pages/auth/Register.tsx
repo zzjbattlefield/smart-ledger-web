@@ -28,7 +28,8 @@ const Register = () => {
       setAuth(data.data.token, data.data.user);
       localStorage.setItem('token', data.data.token);
       navigate('/home', { replace: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // @ts-expect-error: Axios error response structure is not fully typed here
       setError(err.response?.data?.message || '注册失败，请检查输入');
     } finally {
       setLoading(false);

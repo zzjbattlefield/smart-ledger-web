@@ -22,9 +22,10 @@ export interface BillListParams {
   page?: number;
   page_size?: number;
   date?: string; // YYYY-MM
+  category_id?: number;
 }
 
-interface BillListResponse {
+export interface BillListResponse {
   list: Bill[];
   total: number;
   page: number;
@@ -55,7 +56,7 @@ export interface ImportBillError {
   row: number;
   column?: string;
   message: string;
-  row_data?: Record<string, any>;
+  row_data?: Record<string, unknown>;
 }
 
 export interface ImportBillResponse {

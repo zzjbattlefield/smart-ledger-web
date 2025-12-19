@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, ChevronLeft, ArrowUpDown, GripVertical } from 'lucide-react';
 import { Reorder } from 'framer-motion';
@@ -11,29 +11,25 @@ import { getCategories, createCategory, updateCategory, deleteCategory, Category
 import { cn } from '@/utils/cn';
 
 // Category Modal
-const CategoryModal = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  initialData, 
+const CategoryModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  initialData,
   parents,
   currentType
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
   onSave: (data: Partial<Category>) => Promise<void>;
   initialData?: Partial<Category>;
   parents: Category[];
   currentType: 1 | 2;
 }) => {
-  const [form, setForm] = useState<Partial<Category>>({ name: '', parent_id: 0, icon: 'default', type: currentType });
+  const [form, setForm] = useState<Partial<Category>>(initialData || { name: '', parent_id: 0, icon: 'default', type: currentType });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setForm(initialData || { name: '', parent_id: 0, icon: 'default', type: currentType });
-    }
-  }, [isOpen, initialData, currentType]);
+  // Removed problematic useEffect. Component relies on 'key' prop to reset state.
 
   const handleSave = async () => {
     if (!form.name) return;
@@ -102,7 +98,7 @@ const CategoryList = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await getCategories(currentType);
@@ -127,13 +123,14 @@ const CategoryList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentType, expanded]);
 
   useEffect(() => {
     fetchData();
-  }, [currentType]);
+  }, [fetchData]);
 
   const toggleExpand = (id: number) => {
+
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
@@ -156,8 +153,9 @@ const CategoryList = () => {
     try {
       await deleteCategory(deletingId);
       await fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Delete failed', error);
+      // @ts-expect-error: Axios error response structure
       alert(error.response?.data?.message || '删除失败，请确保该分类下无子分类');
     }
   };
@@ -194,7 +192,7 @@ const CategoryList = () => {
     // 关闭排序模式时，批量保存
     setLoading(true);
     try {
-      const promises: Promise<any>[] = [];
+      const promises: Promise<unknown>[] = [];
       categories.forEach((p, pIdx) => {
         if (p.sort_order !== pIdx) {
           promises.push(updateCategory(p.id, { sort_order: pIdx }));
@@ -355,6 +353,7 @@ const CategoryList = () => {
       </div>
 
       <CategoryModal 
+        key={editingCat?.id || 'new'}
         isOpen={showEditModal} 
         onClose={() => setShowEditModal(false)} 
         onSave={handleSaveCategory}

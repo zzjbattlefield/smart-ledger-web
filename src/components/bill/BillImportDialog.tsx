@@ -182,8 +182,8 @@ export const BillImportDialog = ({ isOpen, onClose }: BillImportDialogProps) => 
                               {error.message}
                             </p>
                             <div className="flex items-center text-xs text-gray-400 space-x-2 truncate">
-                              {error.row_data?.['交易时间'] && <span>{error.row_data['交易时间']}</span>}
-                              {error.row_data?.['交易金额'] && <span>¥{error.row_data['交易金额']}</span>}
+                              {!!error.row_data?.['交易时间'] && <span>{String(error.row_data['交易时间'])}</span>}
+                              {!!error.row_data?.['交易金额'] && <span>¥{String(error.row_data['交易金额'])}</span>}
                             </div>
                           </div>
                         </div>
@@ -211,7 +211,7 @@ export const BillImportDialog = ({ isOpen, onClose }: BillImportDialogProps) => 
       <BillEditDialog
         isOpen={!!editError}
         onClose={() => setEditError(null)}
-        initialData={editError?.row_data || {}}
+        initialData={(editError?.row_data || {}) as Record<string, string | number>}
         onSuccess={handleEditSuccess}
       />
     </>
