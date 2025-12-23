@@ -28,8 +28,11 @@ const Home = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
   
+  // Additional stats for "Today"
+  const [todayStats, setTodayStats] = useState<StatsSummary | null>(null);
+
   // Visibility state
-  const [showAmounts, setShowAmounts] = useState(true);
+  const [showAmounts, setShowAmounts] = useState(false);
 
   // Restore scroll position
   useLayoutEffect(() => {
@@ -61,11 +64,22 @@ const Home = () => {
       // Only fetch stats if refreshing (page 1)
       if (isRefresh) {
         requests.push(getStatsSummary({ period: 'month', date: filters.date }));
+        // Fetch today's stats
+        // Note: Using simplified date string construction to avoid timezone issues with simple toISOString() in some environments,
+        // but here we just want YYYY-MM-DD. 
+        // We'll stick to a robust simple formatting or just use string manipulation if we trust local time.
+        // Let's use a safe approach for "today" in local time as YYYY-MM-DD.
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        requests.push(getStatsSummary({ period: 'day', date: `${year}-${month}-${day}` }));
       }
 
       const results = await Promise.all(requests);
       const billsRes = results[0] as { data: ApiResponse<BillListResponse> };
       const statsRes = isRefresh ? (results[1] as { data: ApiResponse<StatsSummary> }) : null;
+      const todayStatsRes = isRefresh ? (results[2] as { data: ApiResponse<StatsSummary> }) : null;
       
       const newBills = billsRes.data.data.list;
       
@@ -73,6 +87,9 @@ const Home = () => {
         setBills(newBills);
         if (statsRes) {
           setStats(statsRes.data.data);
+        }
+        if (todayStatsRes) {
+          setTodayStats(todayStatsRes.data.data);
         }
       } else {
         appendBills(newBills);
@@ -208,14 +225,20 @@ const Home = () => {
              {showAmounts ? <Eye size={20} /> : <EyeOff size={20} />}
            </button>
 
-           <div className="flex flex-col">
-             <span className="text-blue-100 text-xs font-medium mb-1">本月总支出</span>
+           <div className="flex flex-col mb-6">
+             <span className="text-blue-100 text-xs font-medium mb-1">今天支出</span>
              <span className="text-3xl font-bold tracking-tight">
-               {showAmounts ? (stats ? formatCurrency(stats.total_expense) : '0.00') : '****'}
+               {showAmounts ? (todayStats ? formatCurrency(todayStats.total_expense) : '0.00') : '****'}
              </span>
            </div>
            
-           <div className="mt-6 flex items-center justify-between">
+           <div className="flex items-center justify-between">
+             <div>
+               <span className="text-blue-100 text-xs block mb-1">本月支出</span>
+               <span className="text-lg font-semibold">
+                 {showAmounts ? (stats ? formatCurrency(stats.total_expense) : '0.00') : '****'}
+               </span>
+             </div>
              <div>
                <span className="text-blue-100 text-xs block mb-1">本月收入</span>
                <span className="text-lg font-semibold">
@@ -245,30 +268,47 @@ const Home = () => {
           </div>
         ) : (
           <>
-            {groupedBills.map(([date, items]) => (
-              <motion.div 
-                key={date}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="sticky top-14 z-30 bg-ios-background/95 backdrop-blur-sm py-2 mb-2">
-                  <h3 className="text-sm font-semibold text-ios-subtext uppercase tracking-wide">
-                    {formatBillDate(date)}
-                  </h3>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-50">
-                  {items.map(bill => (
-                    <BillItem 
-                      key={bill.id} 
-                      bill={bill} 
-                      onClick={() => navigate(`/bill/detail/${bill.id}`)}
-                      onDelete={() => setDeleteId(bill.id)}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+            {groupedBills.map(([date, items]) => {
+              const dailyStats = items.reduce((acc, curr) => {
+                const amount = parseFloat(curr.amount);
+                if (curr.bill_type === 1) acc.expense += amount;
+                else acc.income += amount;
+                return acc;
+              }, { expense: 0, income: 0 });
+
+              return (
+                <motion.div 
+                  key={date}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="sticky top-14 z-30 bg-ios-background/95 backdrop-blur-sm py-2 mb-2 flex justify-between items-end">
+                    <h3 className="text-sm font-semibold text-ios-subtext uppercase tracking-wide">
+                      {formatBillDate(date)}
+                    </h3>
+                    <div className="text-xs text-gray-400 flex space-x-3">
+                      {dailyStats.income > 0 && (
+                        <span>收 {formatCurrency(dailyStats.income).replace('CN¥', '¥')}</span>
+                      )}
+                      {dailyStats.expense > 0 && (
+                        <span>支 {formatCurrency(dailyStats.expense).replace('CN¥', '¥')}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-50">
+                    {items.map(bill => (
+                      <BillItem 
+                        key={bill.id} 
+                        bill={bill} 
+                        onClick={() => navigate(`/bill/detail/${bill.id}`)}
+                        onDelete={() => setDeleteId(bill.id)}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              );
+            })}
             
             {/* Infinite Scroll Trigger / Loading Indicator */}
             <div ref={observerTarget} className="h-10 flex items-center justify-center w-full mt-4">
