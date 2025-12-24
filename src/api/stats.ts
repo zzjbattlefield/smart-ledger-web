@@ -35,3 +35,7 @@ export const getStatsSummary = (params: { period: 'month' | 'week' | 'day' | 'ye
 export const getCategoryStats = (params: { period: 'month' | 'week' | 'day' | 'year'; date: string }) => {
   return request.get<ApiResponse<CategoryStats>>('/stats/category', { params });
 };
+
+export const getSecondaryCategoryStats = (params: { period: 'month' | 'week' | 'day' | 'year'; date: string; category_id: number }) => {
+  return request.get<ApiResponse<CategoryStats>>('/stats/secondary-category', { params });
+};
