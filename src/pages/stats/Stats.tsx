@@ -9,38 +9,68 @@ import { cn } from '@/utils/cn';
 const COLORS = ['#007AFF', '#5856D6', '#FF9500', '#FF2D55', '#34C759', '#5AC8FA', '#AF52DE', '#FFCC00'];
 
 const Stats = () => {
+  const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
   const [summary, setSummary] = useState<StatsSummary | null>(null);
   const [categories, setCategories] = useState<CategoryStats['categories']>([]);
   const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // We'll store the date string directly to simplify input handling for different types
+  const [dateStr, setDateStr] = useState(format(new Date(), 'yyyy-MM'));
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // Helper to convert input value to API date
+  const getApiDate = (period: string, value: string) => {
+    if (period === 'week' && value.includes('-W')) {
+      // HTML week input returns "YYYY-Www"
+      // date-fns parseISO doesn't support YYYY-Www directly in all versions comfortably
+      // We manually parse it or use a simpler approach
+      const [year, week] = value.split('-W');
+      const date = new Date(parseInt(year), 0, 1);
+      const dayOffset = (parseInt(week) - 1) * 7;
+      date.setDate(date.getDate() + dayOffset);
+      return format(date, 'yyyy-MM-dd');
+    }
+    return value;
+  };
+
+  // Update dateStr default when switching periods
+  const handlePeriodChange = (newPeriod: 'week' | 'month' | 'year') => {
+    setPeriod(newPeriod);
+    const now = new Date();
+    if (newPeriod === 'week') {
+      // Input value for type="week" must be yyyy-Www
+      setDateStr(format(now, "RRRR-'W'II"));
+    } else if (newPeriod === 'month') {
+      setDateStr(format(now, 'yyyy-MM'));
+    } else {
+      setDateStr(format(now, 'yyyy'));
+    }
+  };
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const dateParam = format(currentDate, 'yyyy-MM'); // 默认按月统计
+      const apiDate = getApiDate(period, dateStr);
       
       const [summaryRes, categoryRes] = await Promise.all([
-        getStatsSummary({ period: 'month', date: dateParam }),
-        getCategoryStats({ period: 'month', date: dateParam })
+        getStatsSummary({ period, date: apiDate }),
+        getCategoryStats({ period, date: apiDate })
       ]);
 
       setSummary(summaryRes.data.data);
       setCategories(categoryRes.data.data.categories);
     } catch (error) {
       console.error('获取统计数据失败', error);
-      // 真实接口失败时，不显示 Mock 数据，而是显示错误状态或空状态
       setSummary(null);
       setCategories([]);
     } finally {
       setLoading(false);
     }
-  }, [currentDate]);
+  }, [period, dateStr]);
 
   useEffect(() => {
     fetchData();
-    setActiveIndex(null); // Reset selection on date change
-  }, [currentDate, fetchData]);
+    setActiveIndex(null);
+  }, [fetchData]);
 
   // Transform data for PieChart
   const pieData = categories.map((cat, index) => ({
@@ -51,11 +81,8 @@ const Stats = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onPieClick = (data: any, index: number) => {
-    // Recharts sometimes passes index in the second argument, sometimes in data.payload or data.index
-    // We prioritize the direct index argument, then fallback to data properties
     const clickedIndex = index ?? data?.index ?? data?.payload?.index;
     if (clickedIndex === undefined) return;
-    
     setActiveIndex(prev => prev === clickedIndex ? null : clickedIndex);
   };
 
@@ -63,14 +90,45 @@ const Stats = () => {
     <div className="min-h-screen pt-14 pb-24 px-4 bg-ios-background">
       <Header title="收支统计" />
       
-      {/* 简单的月份选择器 */}
-      <div className="flex justify-center my-4">
-        <input 
-          type="month" 
-          value={format(currentDate, 'yyyy-MM')}
-          onChange={(e) => setCurrentDate(new Date(e.target.value))}
-          className="bg-white px-4 py-2 rounded-xl text-ios-blue font-medium shadow-sm focus:outline-none"
-        />
+      {/* Period Selector */}
+      <div className="flex justify-center mt-4 mb-2">
+        <div className="bg-gray-100 p-1 rounded-xl flex space-x-1">
+          {(['week', 'month', 'year'] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => handlePeriodChange(p)}
+              className={cn(
+                "px-4 py-1.5 text-sm font-medium rounded-lg transition-all",
+                period === p 
+                  ? "bg-white text-ios-text shadow-sm" 
+                  : "text-gray-500 hover:text-gray-700"
+              )}
+            >
+              {p === 'week' ? '周报' : p === 'month' ? '月报' : '年报'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Date Picker */}
+      <div className="flex justify-center mb-6">
+        {period === 'year' ? (
+          <input 
+            type="number" 
+            min="2000"
+            max="2099"
+            value={dateStr}
+            onChange={(e) => setDateStr(e.target.value)}
+            className="bg-white px-4 py-2 rounded-xl text-ios-blue font-medium shadow-sm focus:outline-none text-center min-w-[120px]"
+          />
+        ) : (
+          <input 
+            type={period === 'week' ? "week" : "month"}
+            value={dateStr}
+            onChange={(e) => setDateStr(e.target.value)}
+            className="bg-white px-4 py-2 rounded-xl text-ios-blue font-medium shadow-sm focus:outline-none text-center min-w-[150px]"
+          />
+        )}
       </div>
 
       {loading ? (
