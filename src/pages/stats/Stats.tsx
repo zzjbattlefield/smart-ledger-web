@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { LineChart, Line, ResponsiveContainer, XAxis, Tooltip, PieChart, Pie, Cell, Sector, CartesianGrid } from 'recharts';
 import { format } from 'date-fns';
+import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { Header } from '@/components/ui/Header';
-import { getStatsSummary, getCategoryStats, StatsSummary, CategoryStats } from '@/api/stats';
+import { getStatsSummary, getCategoryStats, getSecondaryCategoryStats, StatsSummary, CategoryStats } from '@/api/stats';
 import { formatCurrency } from '@/utils/date';
 import { cn } from '@/utils/cn';
 
@@ -16,6 +17,11 @@ const Stats = () => {
   // We'll store the date string directly to simplify input handling for different types
   const [dateStr, setDateStr] = useState(format(new Date(), 'yyyy-MM'));
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // Sub-category expansion state
+  const [expandedCategoryId, setExpandedCategoryId] = useState<number | null>(null);
+  const [subCategoryStats, setSubCategoryStats] = useState<Record<number, CategoryStats['categories']>>({});
+  const [subLoading, setSubLoading] = useState<number | null>(null);
 
   // Helper to convert input value to API date
   const getApiDate = (period: string, value: string) => {
@@ -58,6 +64,9 @@ const Stats = () => {
 
       setSummary(summaryRes.data.data);
       setCategories(categoryRes.data.data.categories);
+      // Clear sub-category state when period/date changes
+      setSubCategoryStats({});
+      setExpandedCategoryId(null);
     } catch (error) {
       console.error('获取统计数据失败', error);
       setSummary(null);
@@ -66,6 +75,31 @@ const Stats = () => {
       setLoading(false);
     }
   }, [period, dateStr]);
+
+  const toggleCategory = async (catId: number) => {
+    if (expandedCategoryId === catId) {
+      setExpandedCategoryId(null);
+      return;
+    }
+
+    setExpandedCategoryId(catId);
+
+    if (!subCategoryStats[catId]) {
+      setSubLoading(catId);
+      try {
+        const apiDate = getApiDate(period, dateStr);
+        const res = await getSecondaryCategoryStats({ period, date: apiDate, category_id: catId });
+        setSubCategoryStats(prev => ({
+          ...prev,
+          [catId]: res.data.data.categories
+        }));
+      } catch (error) {
+        console.error('Failed to fetch sub-categories', error);
+      } finally {
+        setSubLoading(null);
+      }
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -157,19 +191,31 @@ const Stats = () => {
 
           {/* 趋势图表 */}
           <div className="bg-white rounded-2xl p-4 shadow-sm h-64">
-            <h3 className="text-sm font-semibold text-gray-500 mb-4">每日支出趋势</h3>
+            <h3 className="text-sm font-semibold text-gray-500 mb-4">支出趋势</h3>
             {summary.trend && summary.trend.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={summary.trend} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2F2F7" />
                   <XAxis 
                     dataKey="date" 
-                    tickFormatter={(val) => val.slice(-2)} // 只显示日期号
+                    tickFormatter={(val) => {
+                      if (period === 'year') {
+                        // Backend returns YYYY-MM for year view
+                        // If "2025-01", split('-')[1] gives "01"
+                        const parts = val.split('-');
+                        if (parts.length >= 2) {
+                           return `${parseInt(parts[1], 10)}月`;
+                        }
+                        return val;
+                      }
+                      // For day/week/month, val is YYYY-MM-DD, slice last 2 for day
+                      return val.slice(-2);
+                    }}
                     axisLine={false} 
                     tickLine={false} 
                     tick={{ fontSize: 10, fill: '#8E8E93' }} 
                     dy={10}
-                    interval={Math.ceil(summary.trend.length / 7)} // 自适应间隔
+                    interval={period === 'year' ? 0 : Math.ceil(summary.trend.length / 7)} 
                   />
                   <Tooltip 
                     cursor={{ stroke: '#007AFF', strokeWidth: 1, strokeDasharray: '3 3' }}
@@ -269,22 +315,63 @@ const Stats = () => {
             <h3 className="text-sm font-semibold text-gray-500 mb-4">支出分类排行</h3>
             <div className="space-y-4">
               {categories.length > 0 ? categories.map((cat, idx) => (
-                <div key={idx} className="flex items-center space-x-3">
-                  <div className="flex-1">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">{cat.name}</span>
-                      <span className="text-sm font-semibold">{cat.percent}%</span>
+                <div key={idx} className="space-y-2">
+                  <div 
+                    className="flex items-center space-x-3 cursor-pointer" 
+                    onClick={() => toggleCategory(cat.id)}
+                  >
+                    <div className="flex-1 flex items-center">
+                      <div className="mr-2 text-gray-400">
+                        {expandedCategoryId === cat.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">{cat.name}</span>
+                          <span className="text-sm font-semibold">{cat.percent}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className={cn("h-full rounded-full transition-all duration-500")} 
+                            style={{ width: `${cat.percent}%`, backgroundColor: COLORS[idx % COLORS.length] }} 
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className={cn("h-full rounded-full transition-all duration-500")} 
-                        style={{ width: `${cat.percent}%`, backgroundColor: COLORS[idx % COLORS.length] }} 
-                      />
+                    <div className="text-sm font-medium w-24 text-right">
+                      {formatCurrency(cat.amount).replace('CN¥', '¥')}
                     </div>
                   </div>
-                  <div className="text-sm font-medium w-24 text-right">
-                    {formatCurrency(cat.amount).replace('CN¥', '¥')}
-                  </div>
+                  
+                  {/* Sub-categories */}
+                  {expandedCategoryId === cat.id && (
+                    <div className="pl-8 pr-2 py-2 bg-gray-50 rounded-xl space-y-3">
+                      {subLoading === cat.id ? (
+                        <div className="flex justify-center py-2 text-gray-400">
+                          <Loader2 className="animate-spin h-4 w-4" />
+                        </div>
+                      ) : subCategoryStats[cat.id] && subCategoryStats[cat.id].length > 0 ? (
+                        subCategoryStats[cat.id].map((subCat) => (
+                          <div key={subCat.id} className="flex items-center justify-between text-xs text-gray-600">
+                             <span className="flex items-center">
+                               {subCat.name === cat.name ? '(本级)' : subCat.name}
+                             </span>
+                             <div className="flex items-center space-x-2">
+                               <div className="w-16 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gray-400 rounded-full" 
+                                    style={{ width: `${subCat.percent}%` }}
+                                  />
+                               </div>
+                               <span className="w-8 text-right">{subCat.percent}%</span>
+                               <span className="w-16 text-right font-medium">{formatCurrency(subCat.amount).replace('CN¥', '¥')}</span>
+                             </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-400 text-xs py-1">无二级分类数据</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )) : (
                 <div className="text-center text-gray-400 py-4">暂无分类数据</div>
