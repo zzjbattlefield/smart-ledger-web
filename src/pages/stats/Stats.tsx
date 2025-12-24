@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip, PieChart, Pie, Cell, Sector } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, XAxis, Tooltip, PieChart, Pie, Cell, Sector, CartesianGrid } from 'recharts';
 import { format } from 'date-fns';
 import { Header } from '@/components/ui/Header';
 import { getStatsSummary, getCategoryStats, StatsSummary, CategoryStats } from '@/api/stats';
@@ -160,7 +160,8 @@ const Stats = () => {
             <h3 className="text-sm font-semibold text-gray-500 mb-4">每日支出趋势</h3>
             {summary.trend && summary.trend.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={summary.trend}>
+                <LineChart data={summary.trend} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2F2F7" />
                   <XAxis 
                     dataKey="date" 
                     tickFormatter={(val) => val.slice(-2)} // 只显示日期号
@@ -171,13 +172,20 @@ const Stats = () => {
                     interval={Math.ceil(summary.trend.length / 7)} // 自适应间隔
                   />
                   <Tooltip 
-                    cursor={{ fill: 'transparent' }}
+                    cursor={{ stroke: '#007AFF', strokeWidth: 1, strokeDasharray: '3 3' }}
                     contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     formatter={(value: number) => [`¥${value}`, '支出']}
                     labelFormatter={(label) => label}
                   />
-                  <Bar dataKey="expense" fill="#007AFF" radius={[4, 4, 4, 4]} barSize={12} />
-                </BarChart>
+                  <Line 
+                    type="monotone" 
+                    dataKey="expense" 
+                    stroke="#007AFF" 
+                    strokeWidth={3} 
+                    dot={{ fill: '#007AFF', strokeWidth: 2, r: 2, stroke: '#fff' }}
+                    activeDot={{ r: 5, strokeWidth: 0 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex h-full items-center justify-center text-gray-300">暂无趋势数据</div>
