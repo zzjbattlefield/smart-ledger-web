@@ -13,3 +13,24 @@ body {
   /* 禁止移动端橡皮筋效果，模拟原生 App 质感 */
   overscroll-behavior-y: none; 
 }
+
+/* Recharts：点击图表时 svg/div 会获得焦点，浏览器默认会绘制黑色 outline（黑框） */
+@supports selector(:focus-visible) {
+  .recharts-responsive-container:focus:not(:focus-visible),
+  .recharts-wrapper:focus:not(:focus-visible),
+  .recharts-responsive-container *:focus:not(:focus-visible),
+  .recharts-wrapper *:focus:not(:focus-visible),
+  .recharts-surface:focus:not(:focus-visible) {
+    outline: none !important;
+  }
+}
+
+@supports not selector(:focus-visible) {
+  .recharts-responsive-container:focus,
+  .recharts-wrapper:focus,
+  .recharts-responsive-container *:focus,
+  .recharts-wrapper *:focus,
+  .recharts-surface:focus {
+    outline: none !important;
+  }
+}

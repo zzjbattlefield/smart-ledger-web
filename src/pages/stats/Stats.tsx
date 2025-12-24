@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { LineChart, Line, ResponsiveContainer, XAxis, Tooltip, PieChart, Pie, Cell, Sector, CartesianGrid } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Sector, CartesianGrid } from 'recharts';
 import { format } from 'date-fns';
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { Header } from '@/components/ui/Header';
@@ -193,8 +193,8 @@ const Stats = () => {
           <div className="bg-white rounded-2xl p-4 shadow-sm h-64">
             <h3 className="text-sm font-semibold text-gray-500 mb-4">支出趋势</h3>
             {summary.trend && summary.trend.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={summary.trend} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <ResponsiveContainer width="100%" height="100%" className="outline-none">
+                <LineChart data={summary.trend} margin={{ top: 5, right: 5, left: 5, bottom: 5 }} style={{ outline: 'none' }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2F2F7" />
                   <XAxis 
                     dataKey="date" 
@@ -216,6 +216,14 @@ const Stats = () => {
                     tick={{ fontSize: 10, fill: '#8E8E93' }} 
                     dy={10}
                     interval={period === 'year' ? 0 : Math.ceil(summary.trend.length / 7)} 
+                  />
+                  <YAxis 
+                    hide={false}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: '#8E8E93' }}
+                    tickFormatter={(val) => `¥${val}`}
+                    width={40}
                   />
                   <Tooltip 
                     cursor={{ stroke: '#007AFF', strokeWidth: 1, strokeDasharray: '3 3' }}
@@ -255,8 +263,8 @@ const Stats = () => {
                </div>
 
                {pieData.length > 0 ? (
-                 <ResponsiveContainer width="100%" height="100%">
-                   <PieChart>
+                 <ResponsiveContainer width="100%" height="100%" className="outline-none">
+                   <PieChart style={{ outline: 'none' }}>
 	                     <Pie
 	                       // 这里用自定义 shape 来控制“点击放大/再次点击还原”，避免 Recharts 内部 tooltip 的 activeIndex 状态干扰
 	                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
