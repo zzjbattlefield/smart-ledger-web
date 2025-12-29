@@ -147,20 +147,26 @@ const Stats = () => {
       {/* Date Picker */}
       <div className="flex justify-center mb-6">
         {period === 'year' ? (
-          <input 
-            type="number" 
-            min="2000"
-            max="2099"
-            value={dateStr}
-            onChange={(e) => setDateStr(e.target.value)}
-            className="bg-white px-4 py-2 rounded-xl text-ios-blue font-medium shadow-sm focus:outline-none text-center min-w-[120px]"
-          />
+          <div className="relative group">
+            <select 
+              value={dateStr}
+              onChange={(e) => setDateStr(e.target.value)}
+              className="appearance-none bg-white pl-6 pr-10 py-2 rounded-xl text-ios-blue font-medium shadow-sm focus:outline-none text-center min-w-[180px] cursor-pointer active:bg-gray-50 transition-colors border-none"
+            >
+              {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map(year => (
+                <option key={year} value={year.toString()}>{year}年</option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-ios-blue/60 group-active:scale-95 transition-transform">
+              <ChevronDown size={18} />
+            </div>
+          </div>
         ) : (
           <input 
             type={period === 'week' ? "week" : "month"}
             value={dateStr}
             onChange={(e) => setDateStr(e.target.value)}
-            className="bg-white px-4 py-2 rounded-xl text-ios-blue font-medium shadow-sm focus:outline-none text-center min-w-[150px]"
+            className="bg-white px-6 py-2 rounded-xl text-ios-blue font-medium shadow-sm focus:outline-none text-center min-w-[180px] cursor-pointer active:bg-gray-50 transition-colors border-none"
           />
         )}
       </div>
