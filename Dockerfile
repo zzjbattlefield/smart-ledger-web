@@ -3,11 +3,11 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json yarn.lock ./
+RUN corepack enable && yarn install --frozen-lockfile
 
 COPY . .
-RUN npm run build
+RUN yarn build
 
 # 运行阶段
 FROM nginx:alpine
@@ -26,4 +26,3 @@ COPY nginx.conf /etc/nginx/nginx.conf
 EXPOSE 8448
 
 CMD ["nginx", "-g", "daemon off;"]
-
