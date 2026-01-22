@@ -1,15 +1,16 @@
 import { Outlet } from 'react-router-dom';
-import BottomTab from './BottomTab';
+import { TabBar } from '../components/layout';
 
-const BasicLayout = () => {
+export function BasicLayout() {
   return (
-    <div className="min-h-screen bg-ios-background pb-24">
-      <main className="mx-auto max-w-md bg-ios-background min-h-screen shadow-2xl shadow-black/5 overflow-hidden">
+    <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
+      {/* Main Content */}
+      <main className="max-w-md mx-auto pb-20">
         <Outlet />
       </main>
-      <BottomTab />
+
+      {/* Tab Bar */}
+      <TabBar />
     </div>
   );
-};
-
-export default BasicLayout;
+}

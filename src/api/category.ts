@@ -1,27 +1,38 @@
-import request, { ApiResponse } from '@/utils/request';
+import request from './request';
+import type { ApiResponse, Category } from '../types';
 
-export interface Category {
-  id: number;
+interface CreateCategoryParams {
   name: string;
-  type: 1 | 2; // 1: expense, 2: income
-  parent_id: number;
-  icon: string;
-  sort_order: number;
-  children?: Category[];
+  type?: 1 | 2;
+  parent_id?: number;
+  icon?: string;
+  sort_order?: number;
 }
 
-export const getCategories = (type?: 1 | 2) => {
-  return request.get<ApiResponse<Category[]>>('/categories', { params: { type } });
-};
+interface UpdateCategoryParams {
+  name?: string;
+  icon?: string;
+  sort_order?: number;
+}
 
-export const createCategory = (data: Partial<Category>) => {
-  return request.post<ApiResponse<Category>>('/categories', data);
-};
+export const categoryApi = {
+  // 获取分类列表
+  getList: (type?: 1 | 2) =>
+    request.get<ApiResponse<Category[]>>('/v1/categories', { params: { type } }),
 
-export const updateCategory = (id: number, data: Partial<Category>) => {
-  return request.put<ApiResponse<Category>>(`/categories/${id}`, data);
-};
+  // 获取分类详情
+  getDetail: (id: number) =>
+    request.get<ApiResponse<Category>>(`/v1/categories/${id}`),
 
-export const deleteCategory = (id: number) => {
-  return request.delete(`/categories/${id}`);
+  // 创建分类
+  create: (data: CreateCategoryParams) =>
+    request.post<ApiResponse<Category>>('/v1/categories', data),
+
+  // 更新分类
+  update: (id: number, data: UpdateCategoryParams) =>
+    request.put<ApiResponse<Category>>(`/v1/categories/${id}`, data),
+
+  // 删除分类
+  delete: (id: number) =>
+    request.delete<ApiResponse<null>>(`/v1/categories/${id}`),
 };

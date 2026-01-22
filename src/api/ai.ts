@@ -1,38 +1,22 @@
-import request, { ApiResponse } from '@/utils/request';
-import { Bill } from './bill';
+import request from './request';
+import type { ApiResponse, AIRecognitionResult, Bill } from '../types';
 
-export interface RecognizeResponse {
-  platform: string;
-  amount: number;
-  merchant: string;
-  bill_type: 1 | 2;
-  category: string; // Returns category name, need to map to ID
-  sub_category: string;
-  pay_time: string;
-  pay_method: string;
-  order_no: string;
-  items: Array<{ name: string; price: number; quantity: number }>;
-  confidence: number;
-}
+export const aiApi = {
+  // 识别支付截图
+  recognize: (image: File) => {
+    const formData = new FormData();
+    formData.append('image', image);
+    return request.post<ApiResponse<AIRecognitionResult>>('/v1/ai/recognize', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 
-export const recognizeBill = (file: File) => {
-  const formData = new FormData();
-  formData.append('image', file);
-  return request.post<ApiResponse<RecognizeResponse>>('/ai/recognize', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    timeout: 90000, // AI might be slow
-  });
-};
-
-export const recognizeAndSaveBill = (file: File) => {
-  const formData = new FormData();
-  formData.append('image', file);
-  return request.post<ApiResponse<Bill>>('/ai/recognize-and-save', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    timeout: 90000,
-  });
+  // 识别并保存账单
+  recognizeAndSave: (image: File) => {
+    const formData = new FormData();
+    formData.append('image', image);
+    return request.post<ApiResponse<Bill>>('/v1/ai/recognize-and-save', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };

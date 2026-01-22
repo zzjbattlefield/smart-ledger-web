@@ -1,41 +1,27 @@
-import request, { ApiResponse } from '@/utils/request';
+import request from './request';
+import type { ApiResponse, StatsSummary, CategoryStats } from '../types';
 
-export interface StatsSummary {
-  period: string;
-  total_expense: number;
-  total_income: number;
-  bill_count: number;
-  daily_average: number;
-  top_categories: Array<{
-    name: string;
-    amount: number;
-    percent: number;
-  }>;
-  trend: Array<{
-    date: string;
-    expense: number;
-    income: number;
-  }>;
+type Period = 'day' | 'week' | 'month' | 'year';
+
+interface StatsParams {
+  period: Period;
+  date: string;
 }
 
-export interface CategoryStats {
-  period: string;
-  categories: Array<{
-    id: number;
-    name: string;
-    amount: number;
-    percent: number;
-  }>;
+interface SecondaryCategoryParams extends StatsParams {
+  category_id: number;
 }
 
-export const getStatsSummary = (params: { period: 'month' | 'week' | 'day' | 'year'; date: string }) => {
-  return request.get<ApiResponse<StatsSummary>>('/stats/summary', { params });
-};
+export const statsApi = {
+  // 获取统计摘要
+  getSummary: (params: StatsParams) =>
+    request.get<ApiResponse<StatsSummary>>('/v1/stats/summary', { params }),
 
-export const getCategoryStats = (params: { period: 'month' | 'week' | 'day' | 'year'; date: string }) => {
-  return request.get<ApiResponse<CategoryStats>>('/stats/category', { params });
-};
+  // 获取分类统计
+  getCategoryStats: (params: StatsParams) =>
+    request.get<ApiResponse<CategoryStats>>('/v1/stats/category', { params }),
 
-export const getSecondaryCategoryStats = (params: { period: 'month' | 'week' | 'day' | 'year'; date: string; category_id: number }) => {
-  return request.get<ApiResponse<CategoryStats>>('/stats/secondary-category', { params });
+  // 获取二级分类统计
+  getSecondaryCategoryStats: (params: SecondaryCategoryParams) =>
+    request.get<ApiResponse<CategoryStats>>('/v1/stats/secondary-category', { params }),
 };

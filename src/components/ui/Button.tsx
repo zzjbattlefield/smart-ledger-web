@@ -1,52 +1,65 @@
-import React from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { forwardRef, type ReactNode } from 'react';
+import { motion, type HTMLMotionProps } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/utils/cn';
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
-  children?: React.ReactNode;
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonSize = 'sm' | 'md' | 'lg';
+
+interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
+  fullWidth?: boolean;
+  children?: ReactNode;
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading, children, disabled, ...props }, ref) => {
-    
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      variant = 'primary',
+      size = 'md',
+      loading = false,
+      fullWidth = false,
+      disabled,
+      className = '',
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const baseStyles =
+      'inline-flex items-center justify-center font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+
     const variants = {
-      primary: "bg-ios-blue text-white active:bg-blue-600",
-      secondary: "bg-gray-100 text-ios-text active:bg-gray-200",
-      ghost: "bg-transparent text-ios-blue hover:bg-blue-50 active:bg-blue-100",
-      danger: "bg-ios-red text-white active:bg-red-600",
+      primary: 'bg-cta-blue text-white hover:bg-blue-700 focus:ring-cta-blue',
+      secondary:
+        'bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-900 focus:ring-gray-500',
+      ghost:
+        'bg-transparent text-light-text dark:text-dark-text hover:bg-gray-100 dark:hover:bg-zinc-900 focus:ring-gray-500',
+      danger: 'bg-expense-red text-white hover:bg-red-600 focus:ring-expense-red',
     };
 
     const sizes = {
-      sm: "h-8 px-3 text-sm",
-      md: "h-12 px-6 text-base",
-      lg: "h-14 px-8 text-lg",
+      sm: 'px-3 py-1.5 text-sm',
+      md: 'px-4 py-2.5 text-base',
+      lg: 'px-6 py-3 text-lg',
     };
 
     return (
       <motion.button
         ref={ref}
-        whileTap={{ scale: 0.96 }}
-        className={cn(
-          "relative flex items-center justify-center rounded-2xl font-semibold transition-colors duration-200",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
-          variants[variant],
-          sizes[size],
-          className
-        )}
-        disabled={disabled || isLoading}
+        whileTap={{ scale: 0.98 }}
+        disabled={disabled || loading}
+        className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${
+          fullWidth ? 'w-full' : ''
+        } ${className}`}
         {...props}
       >
-        {isLoading && (
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        )}
+        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {children}
       </motion.button>
     );
   }
 );
 
-Button.displayName = "Button";
+Button.displayName = 'Button';

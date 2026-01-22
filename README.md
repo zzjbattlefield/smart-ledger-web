@@ -1,71 +1,73 @@
-# Smart Ledger Web
+# React + TypeScript + Vite
 
-智能记账本 Web 前端应用，帮助用户便捷地记录和管理个人财务。
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 功能特性
+Currently, two official plugins are available:
 
-- **账单管理** - 添加、查看、编辑收支记录
-- **分类管理** - 自定义收入/支出分类
-- **数据统计** - 可视化展示收支统计和趋势
-- **用户系统** - 注册、登录、个人信息管理
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## 技术栈
+## React Compiler
 
-- **框架**: React 19 + TypeScript
-- **构建工具**: Vite
-- **样式**: Tailwind CSS
-- **状态管理**: Zustand
-- **路由**: React Router v7
-- **图表**: Recharts
-- **动画**: Framer Motion
-- **HTTP 客户端**: Axios
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## 项目结构
+## Expanding the ESLint configuration
 
-```
-src/
-├── api/          # API 接口封装
-├── components/   # 公共组件
-├── hooks/        # 自定义 Hooks
-├── layouts/      # 布局组件
-├── pages/        # 页面组件
-│   ├── auth/     # 认证页面
-│   ├── bill/     # 账单页面
-│   ├── category/ # 分类页面
-│   ├── profile/  # 个人中心
-│   └── stats/    # 统计页面
-├── router/       # 路由配置
-├── store/        # 状态管理
-└── utils/        # 工具函数
-```
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-## 开发指南
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-### 环境要求
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-- Node.js >= 18
-- npm >= 9
-
-### 安装依赖
-
-```bash
-npm install
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-### 启动开发服务器
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-```bash
-npm run dev
-```
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-### 构建生产版本
-
-```bash
-npm run build
-```
-
-### 代码检查
-
-```bash
-npm run lint
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```

@@ -1,39 +1,44 @@
-import React from 'react';
-import { cn } from '@/utils/cn';
+import { forwardRef, type InputHTMLAttributes } from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, leftIcon, rightIcon, className = '', ...props }, ref) => {
     return (
-      <div className="w-full space-y-2">
+      <div className="w-full">
         {label && (
-          <label className="text-sm font-medium text-ios-subtext ml-1">
+          <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-1.5">
             {label}
           </label>
         )}
         <div className="relative">
+          {leftIcon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-light-text-secondary dark:text-dark-text-secondary">
+              {leftIcon}
+            </div>
+          )}
           <input
             ref={ref}
-            className={cn(
-              "w-full h-12 rounded-xl bg-gray-100 px-4 text-ios-text placeholder:text-gray-400",
-              "focus:outline-none focus:ring-2 focus:ring-ios-blue/20 focus:bg-white transition-all duration-300 ease-out",
-              "border border-transparent focus:border-ios-blue/50",
-              error && "bg-red-50 focus:ring-red-100 border-red-200",
-              className
-            )}
+            className={`input ${leftIcon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''} ${
+              error ? 'border-expense-red focus:ring-expense-red' : ''
+            } ${className}`}
             {...props}
           />
+          {rightIcon && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-light-text-secondary dark:text-dark-text-secondary">
+              {rightIcon}
+            </div>
+          )}
         </div>
-        {error && (
-          <p className="text-xs text-ios-red ml-1 animate-fadeIn">{error}</p>
-        )}
+        {error && <p className="mt-1 text-sm text-expense-red">{error}</p>}
       </div>
     );
   }
 );
 
-Input.displayName = "Input";
+Input.displayName = 'Input';

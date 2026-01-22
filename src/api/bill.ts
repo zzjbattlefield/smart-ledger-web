@@ -1,78 +1,42 @@
-import request, { ApiResponse } from '@/utils/request';
+import request from './request';
+import type {
+  ApiResponse,
+  Bill,
+  BillListResponse,
+  CreateBillRequest,
+  UpdateBillRequest,
+  BillListParams,
+  ImportResult
+} from '../types';
 
-export interface Bill {
-  id: number;
-  uuid: string;
-  amount: string;
-  bill_type: 1 | 2; // 1: expense, 2: income
-  platform: string;
-  merchant: string;
-  category_id?: number;
-  order_no?: string;
-  category: {
-    id: number;
-    name: string;
-    icon: string;
-  };
-  pay_time: string;
-  remark: string;
-}
+export const billApi = {
+  // 获取账单列表
+  getList: (params?: BillListParams) =>
+    request.get<ApiResponse<BillListResponse>>('/v1/bills', { params }),
 
-export interface BillListParams {
-  page?: number;
-  page_size?: number;
-  date?: string; // YYYY-MM
-  category_id?: number;
-}
+  // 获取账单详情
+  getDetail: (id: number) =>
+    request.get<ApiResponse<Bill>>(`/v1/bills/${id}`),
 
-export interface BillListResponse {
-  list: Bill[];
-  total: number;
-  page: number;
-  page_size: number;
-}
+  // 创建账单
+  create: (data: CreateBillRequest) =>
+    request.post<ApiResponse<Bill>>('/v1/bills', data),
 
-export const getBills = (params: BillListParams) => {
-  return request.get<ApiResponse<BillListResponse>>('/bills', { params });
-};
+  // 更新账单
+  update: (id: number, data: UpdateBillRequest) =>
+    request.put<ApiResponse<Bill>>(`/v1/bills/${id}`, data),
 
-export const createBill = (data: Partial<Bill>) => {
-  return request.post<ApiResponse<Bill>>('/bills', data);
-};
+  // 删除账单
+  delete: (id: number) =>
+    request.delete<ApiResponse<null>>(`/v1/bills/${id}`),
 
-export const getBillDetail = (id: number | string) => {
-  return request.get<ApiResponse<Bill>>(`/bills/${id}`);
-};
-
-export const updateBill = (id: number | string, data: Partial<Bill>) => {
-  return request.put<ApiResponse<Bill>>(`/bills/${id}`, data);
-};
-
-export const deleteBill = (id: number | string) => {
-  return request.delete(`/bills/${id}`);
-};
-
-export interface ImportBillError {
-  row: number;
-  column?: string;
-  message: string;
-  row_data?: Record<string, unknown>;
-}
-
-export interface ImportBillResponse {
-  total: number;
-  failed: number;
-  errors: ImportBillError[];
-}
-
-export const importBills = (file: File, parserType: string = 'vivo') => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('parser_type', parserType);
-  
-  return request.post<ApiResponse<ImportBillResponse>>('/bills/import', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  // 导入账单
+  import: (file: File, parserType: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('parser_type', parserType);
+    return request.post<ApiResponse<ImportResult>>('/v1/bills/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };

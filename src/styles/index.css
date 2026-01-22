@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #FAFAFA;
+    --bg-card: #FFFFFF;
+    --text-primary: #18181B;
+    --text-secondary: #71717A;
+    --border-color: #E4E4E7;
+  }
+
+  .dark {
+    --bg-primary: #000000;
+    --bg-card: #0A0A0A;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A1A1AA;
+    --border-color: #27272A;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    @apply bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text;
+    @apply antialiased;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Safe area padding for notched devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-light-card dark:bg-dark-card rounded-2xl p-4;
+    @apply shadow-sm dark:shadow-none;
+  }
+
+  .btn-primary {
+    @apply bg-cta-blue text-white font-medium py-3 px-6 rounded-xl;
+    @apply hover:bg-blue-700 active:bg-blue-800 transition-colors;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text;
+    @apply border border-gray-200 dark:border-zinc-800;
+    @apply font-medium py-3 px-6 rounded-xl;
+    @apply hover:bg-gray-50 dark:hover:bg-zinc-900 active:bg-gray-100 dark:active:bg-zinc-800;
+    @apply transition-colors;
+  }
+
+  .input {
+    @apply w-full bg-light-card dark:bg-dark-card;
+    @apply border border-gray-200 dark:border-zinc-800;
+    @apply rounded-xl px-4 py-3;
+    @apply text-light-text dark:text-dark-text;
+    @apply placeholder:text-light-text-secondary dark:placeholder:text-dark-text-secondary;
+    @apply focus:outline-none focus:ring-2 focus:ring-cta-blue focus:border-transparent;
+    @apply transition-all;
+  }
+
+  .text-expense {
+    @apply text-expense-red;
+  }
+
+  .text-income {
+    @apply text-income-green;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Remove Recharts focus outline */
+  .recharts-wrapper,
+  .recharts-wrapper svg,
+  .recharts-wrapper svg:focus,
+  .recharts-surface,
+  .recharts-surface:focus,
+  /* Recharts 的扇区/图层是 <g tabindex="-1">，点击后会获得焦点并出现黑色描边 */
+  .recharts-wrapper g:focus,
+  .recharts-wrapper .recharts-layer:focus,
+  .recharts-wrapper .recharts-pie-sector:focus {
+    outline: none !important;
+  }
+}

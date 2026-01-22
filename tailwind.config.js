@@ -4,44 +4,32 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // iOS System Colors reference
-        ios: {
-          background: "#F2F2F7", // System Grouped Background
-          card: "#FFFFFF",
-          text: "#000000",
-          subtext: "#8E8E93",
-          separator: "#C6C6C8",
-          blue: "#007AFF",
-          green: "#34C759",
-          red: "#FF3B30",
-          orange: "#FF9500",
-          yellow: "#FFCC00",
-          purple: "#AF52DE",
-          teal: "#5AC8FA",
-        }
+        // Light Mode
+        'light-bg': '#FAFAFA',
+        'light-card': '#FFFFFF',
+        'light-text': '#18181B',
+        'light-text-secondary': '#71717A',
+        // Dark Mode (OLED)
+        'dark-bg': '#000000',
+        'dark-card': '#0A0A0A',
+        'dark-text': '#FFFFFF',
+        'dark-text-secondary': '#A1A1AA',
+        // Brand Colors
+        'cta-blue': '#2563EB',
+        'income-green': '#22C55E',
+        'expense-red': '#EF4444',
       },
       fontFamily: {
-        sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "San Francisco",
-          "Segoe UI",
-          "Roboto",
-          "Helvetica Neue",
-          "sans-serif",
-        ],
+        sans: ['IBM Plex Sans', 'system-ui', '-apple-system', 'sans-serif'],
       },
-      boxShadow: {
-        'ios-sm': '0 2px 8px rgba(0, 0, 0, 0.04)',
-        'ios-md': '0 4px 16px rgba(0, 0, 0, 0.08)',
-        'ios-lg': '0 8px 32px rgba(0, 0, 0, 0.12)',
+      spacing: {
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-top': 'env(safe-area-inset-top)',
       },
-      backdropBlur: {
-        xs: '2px',
-      }
     },
   },
   plugins: [],
