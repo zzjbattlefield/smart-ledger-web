@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BillItem } from '../../components/bill';
 import { BillItemSkeleton, Dialog, Button, useToast } from '../../components/ui';
 import { useBillStore, useCategoryStore } from '../../store';
-import type { Bill } from '../../types';
+import { statsApi } from '../../api';
+import type { Bill, StatsSummary } from '../../types';
 import { formatDate, formatAmount } from '../../utils/format';
 
 interface GroupedBills {
@@ -26,17 +27,18 @@ export function HomePage() {
 
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [summary, setSummary] = useState<StatsSummary | null>(null);
+  const [showAmount, setShowAmount] = useState(() => {
+    return localStorage.getItem('showAmount') === 'true';
+  });
 
-  // Calculate monthly summary
-  const monthlySummary = useMemo(() => {
-    const totalExpense = bills
-      .filter((b) => b.bill_type === 1)
-      .reduce((sum, b) => sum + parseFloat(b.amount), 0);
-    const totalIncome = bills
-      .filter((b) => b.bill_type === 2)
-      .reduce((sum, b) => sum + parseFloat(b.amount), 0);
-    return { totalExpense, totalIncome };
-  }, [bills]);
+  const toggleShowAmount = () => {
+    setShowAmount((prev) => {
+      const next = !prev;
+      localStorage.setItem('showAmount', String(next));
+      return next;
+    });
+  };
 
   // Group bills by date
   const groupedBills = useMemo<GroupedBills[]>(() => {
@@ -72,6 +74,17 @@ export function HomePage() {
     fetchCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch monthly summary
+  useEffect(() => {
+    const fetchSummary = async () => {
+      const month = String(selectedMonth).padStart(2, '0');
+      const dateParam = `${selectedYear}-${month}`;
+      const res = await statsApi.getSummary({ period: 'month', date: dateParam });
+      setSummary(res.data.data);
+    };
+    fetchSummary();
+  }, [selectedYear, selectedMonth]);
 
   // Infinite scroll
   const handleScroll = useCallback(() => {
@@ -172,13 +185,13 @@ export function HomePage() {
           </AnimatePresence>
 
           {/* Summary Card */}
-          <div className="card mt-4 flex gap-6">
+          <div className="card mt-4 flex items-center gap-6">
             <div className="flex-1">
               <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
                 支出
               </p>
               <p className="text-xl font-bold text-expense-red">
-                {formatAmount(monthlySummary.totalExpense)}
+                {showAmount ? formatAmount(summary?.total_expense || '0') : '****'}
               </p>
             </div>
             <div className="flex-1">
@@ -186,9 +199,15 @@ export function HomePage() {
                 收入
               </p>
               <p className="text-xl font-bold text-income-green">
-                {formatAmount(monthlySummary.totalIncome)}
+                {showAmount ? formatAmount(summary?.total_income || '0') : '****'}
               </p>
             </div>
+            <button
+              onClick={toggleShowAmount}
+              className="p-2 text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text dark:hover:text-dark-text transition-colors"
+            >
+              {showAmount ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+            </button>
           </div>
         </div>
       </header>
