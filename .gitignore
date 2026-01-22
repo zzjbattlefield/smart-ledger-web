@@ -28,6 +28,7 @@ PROGRESS.md
 DESIGN.md
 docs/
 server.log
+.worktrees/
 
 # 部署配置
 .env.production
