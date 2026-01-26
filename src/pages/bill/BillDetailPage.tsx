@@ -6,7 +6,7 @@ import { CategoryPicker, CategoryAvatar } from '../../components/bill';
 import { billApi } from '../../api';
 import { useBillStore, useCategoryStore } from '../../store';
 import type { Bill, Category } from '../../types';
-import { formatAmount } from '../../utils/format';
+import { formatAmount, getLocalDateTimeString } from '../../utils/format';
 
 export function BillDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -232,7 +232,7 @@ export function BillDetailPage() {
             {isEditing ? (
               <input
                 type="datetime-local"
-                value={editPayTime.slice(0, 16)}
+                value={getLocalDateTimeString(new Date(editPayTime))}
                 onChange={(e) => setEditPayTime(e.target.value ? new Date(e.target.value).toISOString() : '')}
                 className="text-right bg-transparent text-light-text dark:text-dark-text outline-none"
               />

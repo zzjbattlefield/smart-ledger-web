@@ -6,6 +6,7 @@ import { CategoryPicker, NumberKeypad, CategoryAvatar } from '../../components/b
 import { useToast } from '../../components/ui';
 import { useBillStore, useCategoryStore } from '../../store';
 import { aiApi } from '../../api';
+import { getLocalDateTimeString } from '../../utils/format';
 import type { Category } from '../../types';
 
 export function AddBillPage() {
@@ -18,7 +19,7 @@ export function AddBillPage() {
   const [billType, setBillType] = useState<1 | 2>(1);
   const [amount, setAmount] = useState('0');
   const [categoryId, setCategoryId] = useState<number | undefined>();
-  const [payTime, setPayTime] = useState(new Date().toISOString().slice(0, 16));
+  const [payTime, setPayTime] = useState(getLocalDateTimeString());
   const [remark, setRemark] = useState('');
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [isRecognizing, setIsRecognizing] = useState(false);
