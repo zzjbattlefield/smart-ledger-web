@@ -1,7 +1,9 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '../types';
+import { clearAuthStorage, getAuthToken } from '../utils';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+let isHandlingUnauthorized = false;
 
 export const request = axios.create({
   baseURL: API_BASE_URL,
@@ -14,7 +16,7 @@ export const request = axios.create({
 // Request interceptor - add token
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -38,9 +40,13 @@ request.interceptors.response.use(
 
       // Handle authentication errors
       if (status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        clearAuthStorage();
+
+        // 避免并发请求 401 时重复触发跳转，导致“home/login 来回闪动”
+        if (!isHandlingUnauthorized) {
+          isHandlingUnauthorized = true;
+          window.location.replace('/login');
+        }
         return Promise.reject(new Error('登录已过期，请重新登录'));
       }
 

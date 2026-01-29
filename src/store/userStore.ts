@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '../types';
 import { authApi } from '../api';
+import { clearAuthStorage } from '../utils';
 
 interface UserState {
   user: User | null;
@@ -31,7 +32,6 @@ export const useUserStore = create<UserState>()(
         try {
           const { data } = await authApi.login({ phone, password });
           const { token, user } = data.data;
-          localStorage.setItem('token', token);
           set({ user, token, isLoading: false });
         } catch (err) {
           const message = err instanceof Error ? err.message : '登录失败';
@@ -45,7 +45,6 @@ export const useUserStore = create<UserState>()(
         try {
           const { data } = await authApi.register({ phone, password, nickname });
           const { token, user } = data.data;
-          localStorage.setItem('token', token);
           set({ user, token, isLoading: false });
         } catch (err) {
           const message = err instanceof Error ? err.message : '注册失败';
@@ -55,7 +54,7 @@ export const useUserStore = create<UserState>()(
       },
 
       logout: () => {
-        localStorage.removeItem('token');
+        clearAuthStorage();
         set({ user: null, token: null });
       },
 
