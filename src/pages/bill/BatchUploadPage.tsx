@@ -9,7 +9,7 @@ import type { Bill } from '../../types';
 
 export interface UploadItem {
   id: string;
-  file: File;
+  file: File | null;
   preview: string;
   status: 'pending' | 'processing' | 'success' | 'error';
   result?: Bill;
@@ -33,10 +33,20 @@ const STORAGE_KEY = 'batch_upload_result';
 
 type PagePhase = 'select' | 'processing' | 'result';
 
+const fileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
 export function BatchUploadPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const itemsRef = useRef<UploadItem[]>([]);
+  const prevItemsRef = useRef<UploadItem[]>([]);
 
   const [items, setItems] = useState<UploadItem[]>([]);
   const [phase, setPhase] = useState<PagePhase>('select');
@@ -81,12 +91,49 @@ export function BatchUploadPage() {
     setSavedResults([]);
   }, []);
 
-  // 清理 blob URLs
+  // 跟踪 items 变化：回收被移除的 blob URL；并保持一个最新快照供其它回调使用
+  useEffect(() => {
+    itemsRef.current = items;
+
+    const prevItems = prevItemsRef.current;
+    prevItems.forEach(prevItem => {
+      const stillExists = items.some(i => i.id === prevItem.id);
+      if (!stillExists && prevItem.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(prevItem.preview);
+      }
+    });
+
+    prevItemsRef.current = items;
+  }, [items]);
+
+  // 组件卸载时，回收所有剩余的 blob URL
   useEffect(() => {
     return () => {
-      items.forEach(item => URL.revokeObjectURL(item.preview));
+      prevItemsRef.current.forEach(item => {
+        if (item.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(item.preview);
+        }
+      });
     };
-  }, [items]);
+  }, []);
+
+  // 预览图加载失败时的兜底：尝试将 blob URL 替换为 data URL（可规避部分环境对 blob: 的限制）
+  const handlePreviewError = useCallback(async (id: string) => {
+    const current = itemsRef.current.find(i => i.id === id);
+    if (!current?.file) return;
+    if (!current.preview.startsWith('blob:')) return;
+
+    try {
+      const dataUrl = await fileToDataUrl(current.file);
+      URL.revokeObjectURL(current.preview);
+
+      setItems(prev =>
+        prev.map(i => (i.id === id ? { ...i, preview: dataUrl } : i))
+      );
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // 处理文件选择
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,6 +172,10 @@ export function BatchUploadPage() {
   // 处理单张图片
   const processItem = async (item: UploadItem): Promise<UploadItem> => {
     try {
+      if (!item.file) {
+        return { ...item, status: 'error', error: '原始文件不存在，无法识别' };
+      }
+
       const { data } = await aiApi.recognizeAndSave(item.file);
       return {
         ...item,
@@ -143,7 +194,7 @@ export function BatchUploadPage() {
   // 并发处理所有图片
   const processAllImages = useCallback(async () => {
     const concurrencyLimit = 3;
-    const pendingItems = items.filter(i => i.status === 'pending' || i.status === 'error');
+    const pendingItems = items.filter(i => (i.status === 'pending' || i.status === 'error') && i.file);
 
     if (pendingItems.length === 0) {
       toast.error('没有待处理的图片');
@@ -249,7 +300,7 @@ export function BatchUploadPage() {
     ? items
     : savedResults.map(r => ({
         id: r.id,
-        file: null as unknown as File, // 恢复的项没有原始文件
+        file: null, // 恢复的项没有原始文件
         preview: '', // 恢复的项没有预览图
         status: r.status,
         result: r.result,
@@ -324,6 +375,7 @@ export function BatchUploadPage() {
               <ImagePreviewGrid
                 items={displayItems}
                 onDelete={phase === 'select' ? handleDelete : undefined}
+                onPreviewError={handlePreviewError}
               />
             )}
 

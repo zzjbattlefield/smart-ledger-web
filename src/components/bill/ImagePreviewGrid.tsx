@@ -5,9 +5,10 @@ import type { UploadItem } from '../../pages/bill/BatchUploadPage';
 interface ImagePreviewGridProps {
   items: UploadItem[];
   onDelete?: (id: string) => void;
+  onPreviewError?: (id: string) => void;
 }
 
-export function ImagePreviewGrid({ items, onDelete }: ImagePreviewGridProps) {
+export function ImagePreviewGrid({ items, onDelete, onPreviewError }: ImagePreviewGridProps) {
   const getStatusIndicator = (status: UploadItem['status']) => {
     switch (status) {
       case 'pending':
@@ -47,6 +48,7 @@ export function ImagePreviewGrid({ items, onDelete }: ImagePreviewGridProps) {
             src={item.preview}
             alt={`预览 ${index + 1}`}
             className="w-full h-full object-cover rounded-xl"
+            onError={() => onPreviewError?.(item.id)}
           />
 
           {/* 状态指示器 */}

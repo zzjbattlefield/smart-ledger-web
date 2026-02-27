@@ -1,4 +1,5 @@
-import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import { useCallback, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { motion, useMotionValue, type PanInfo } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import type { Bill } from '../../types';
 import { formatAmount, formatTime } from '../../utils/format';
@@ -10,37 +11,88 @@ interface BillItemProps {
   onClick?: () => void;
 }
 
+const SWIPE_OPEN_OFFSET = -80;
+const SWIPE_OPEN_THRESHOLD = -40;
+
 export function BillItem({ bill, onDelete, onClick }: BillItemProps) {
   const x = useMotionValue(0);
-  const deleteOpacity = useTransform(x, [-100, -50], [1, 0]);
-  const deleteWidth = useTransform(x, [-100, 0], [80, 0]);
+  const [isSwipedOpen, setIsSwipedOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const closeSwipe = useCallback(() => {
+    x.stop();
+    x.set(0);
+    setIsSwipedOpen(false);
+  }, [x]);
+
+  const openSwipe = useCallback(() => {
+    x.stop();
+    x.set(SWIPE_OPEN_OFFSET);
+    setIsSwipedOpen(true);
+  }, [x]);
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.x < -100 && onDelete) {
-      onDelete(bill.id);
+    if (!onDelete) {
+      setIsDragging(false);
+      return;
     }
+
+    if (info.offset.x <= SWIPE_OPEN_THRESHOLD) {
+      openSwipe();
+    } else {
+      closeSwipe();
+    }
+
+    requestAnimationFrame(() => setIsDragging(false));
+  };
+
+  const handleDeleteClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    closeSwipe();
+    onDelete?.(bill.id);
+  };
+
+  const handleItemClick = () => {
+    if (isDragging) return;
+
+    if (isSwipedOpen) {
+      closeSwipe();
+      return;
+    }
+
+    onClick?.();
   };
 
   const isExpense = bill.bill_type === 1;
 
   return (
     <div className="relative overflow-hidden">
-      {/* Delete button behind */}
-      <motion.div
-        style={{ width: deleteWidth, opacity: deleteOpacity }}
-        className="absolute right-0 top-0 bottom-0 bg-expense-red flex items-center justify-center"
-      >
-        <Trash2 className="w-5 h-5 text-white" />
-      </motion.div>
+      {onDelete && (
+        <div className="absolute right-0 top-0 bottom-0 w-20 bg-expense-red flex items-center justify-center">
+          <button
+            type="button"
+            onClick={handleDeleteClick}
+            className="w-full h-full flex items-center justify-center"
+          >
+            <Trash2 className="w-5 h-5 text-white" />
+            <span className="sr-only">删除账单</span>
+          </button>
+        </div>
+      )}
 
       {/* Draggable content */}
       <motion.div
-        drag="x"
-        dragConstraints={{ left: -100, right: 0 }}
-        dragElastic={0.1}
+        drag={onDelete ? 'x' : false}
+        dragConstraints={{ left: onDelete ? SWIPE_OPEN_OFFSET : 0, right: 0 }}
+        dragElastic={0.05}
         style={{ x }}
-        onDragEnd={handleDragEnd}
-        onClick={onClick}
+        onDragStart={onDelete ? handleDragStart : undefined}
+        onDragEnd={onDelete ? handleDragEnd : undefined}
+        onClick={handleItemClick}
         className="flex items-center gap-3 p-4 bg-light-card dark:bg-dark-card cursor-pointer active:bg-gray-50 dark:active:bg-zinc-900 transition-colors"
       >
         {/* Category Icon */}

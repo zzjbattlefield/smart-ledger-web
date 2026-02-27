@@ -7,6 +7,7 @@ export const aiApi = {
     const formData = new FormData();
     formData.append('image', image);
     return request.post<ApiResponse<AIRecognitionResult>>('/v1/ai/recognize', formData, {
+      timeout: 120000,
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
@@ -16,6 +17,7 @@ export const aiApi = {
     const formData = new FormData();
     formData.append('image', image);
     return request.post<ApiResponse<Bill>>('/v1/ai/recognize-and-save', formData, {
+      timeout: 120000,
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

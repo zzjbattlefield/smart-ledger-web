@@ -1,10 +1,10 @@
 import { Outlet, Navigate } from 'react-router-dom';
-import { useUserStore } from '../store';
+import { getAuthToken } from '../utils';
 
 export function AuthLayout() {
-  const token = useUserStore((state) => state.token);
+  const token = getAuthToken();
 
-  // If already logged in, redirect to home
+  // If already logged in with valid token, redirect to home
   if (token) {
     return <Navigate to="/home" replace />;
   }
