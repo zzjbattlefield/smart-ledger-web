@@ -168,7 +168,7 @@ export function CategoryPicker({
               ) : isSearching ? (
                 // 搜索模式
                 searchResults.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {searchResults.map((item) => {
                       const { category, parentName } = item;
                       const isSelected = category.id === selectedId;
@@ -181,7 +181,7 @@ export function CategoryPicker({
                             onSelect(category);
                             onClose();
                           }}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${
+                          className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-colors ${
                             isSelected
                               ? 'bg-cta-blue/10 border-2 border-cta-blue'
                               : 'bg-gray-50 dark:bg-zinc-900 border-2 border-transparent'
@@ -202,7 +202,7 @@ export function CategoryPicker({
                           </div>
                           <div className="flex flex-col items-center w-full">
                             <span
-                              className={`text-xs font-medium truncate w-full text-center ${
+                              className={`text-sm font-medium w-full text-center ${
                                 isSelected
                                   ? 'text-cta-blue'
                                   : 'text-light-text dark:text-dark-text'
@@ -227,7 +227,7 @@ export function CategoryPicker({
                 )
               ) : (
                 // 正常模式
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   {displayCategories.map((category) => {
                     const isSelected = category.id === selectedId;
                     const hasChildren =
@@ -242,7 +242,7 @@ export function CategoryPicker({
                             ? handleSelectChild(category)
                             : handleSelectParent(category)
                         }
-                        className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-colors ${
                           isSelected
                             ? 'bg-cta-blue/10 border-2 border-cta-blue'
                             : 'bg-gray-50 dark:bg-zinc-900 border-2 border-transparent'
@@ -262,7 +262,7 @@ export function CategoryPicker({
                           )}
                         </div>
                         <span
-                          className={`text-xs font-medium truncate w-full text-center ${
+                          className={`text-sm font-medium w-full text-center ${
                             isSelected
                               ? 'text-cta-blue'
                               : 'text-light-text dark:text-dark-text'
