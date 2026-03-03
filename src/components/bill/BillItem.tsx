@@ -72,7 +72,7 @@ export function BillItem({ bill, onDelete, onClick }: BillItemProps) {
   return (
     <div className="relative overflow-hidden">
       {onDelete && (
-        <div className="absolute right-0 top-0 bottom-0 w-20 bg-expense-red flex items-center justify-center">
+        <div className="absolute right-0 top-0 bottom-0 z-0 w-20 bg-expense-red flex items-center justify-center">
           <button
             type="button"
             onClick={handleDeleteClick}
@@ -93,7 +93,7 @@ export function BillItem({ bill, onDelete, onClick }: BillItemProps) {
         onDragStart={onDelete ? handleDragStart : undefined}
         onDragEnd={onDelete ? handleDragEnd : undefined}
         onClick={handleItemClick}
-        className="flex items-center gap-3 p-4 bg-light-card dark:bg-dark-card cursor-pointer active:bg-gray-50 dark:active:bg-zinc-900 transition-colors"
+        className="relative z-10 w-full flex items-center gap-3 p-4 bg-light-card dark:bg-dark-card cursor-pointer active:bg-gray-50 dark:active:bg-zinc-900 transition-colors"
       >
         {/* Category Icon */}
         <CategoryAvatar name={bill.category?.name || '未'} />
