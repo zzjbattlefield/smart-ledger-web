@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Phone, Lock, Eye, EyeOff } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button, Input, useToast } from '../../components/ui';
 import { useUserStore } from '../../store';
@@ -55,7 +55,15 @@ export function LoginPage() {
       className="flex flex-col min-h-[80vh]"
     >
       {/* Header */}
-      <div className="py-12 text-center">
+      <div className="py-16 text-center">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+          className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-cta-blue to-blue-600 flex items-center justify-center shadow-fab"
+        >
+          <Wallet className="w-10 h-10 text-white" />
+        </motion.div>
         <h1 className="text-3xl font-bold text-light-text dark:text-dark-text mb-2">
           Smart Ledger
         </h1>
@@ -86,7 +94,7 @@ export function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="p-1"
+              className="p-1 cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
@@ -94,8 +102,8 @@ export function LoginPage() {
           error={errors.password}
         />
 
-        <div className="mt-4">
-          <Button type="submit" fullWidth loading={isLoading}>
+        <div className="mt-6">
+          <Button type="submit" fullWidth size="lg" loading={isLoading}>
             登录
           </Button>
         </div>

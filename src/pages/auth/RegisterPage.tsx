@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Phone, Lock, Eye, EyeOff, User } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, User, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button, Input, useToast } from '../../components/ui';
 import { useUserStore } from '../../store';
@@ -70,7 +70,15 @@ export function RegisterPage() {
       className="flex flex-col min-h-[80vh]"
     >
       {/* Header */}
-      <div className="py-8 text-center">
+      <div className="py-12 text-center">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+          className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-income-green to-emerald-600 flex items-center justify-center shadow-lg"
+        >
+          <UserPlus className="w-10 h-10 text-white" />
+        </motion.div>
         <h1 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
           创建账号
         </h1>
@@ -111,7 +119,7 @@ export function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="p-1"
+              className="p-1 cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
@@ -128,8 +136,8 @@ export function RegisterPage() {
           error={errors.confirmPassword}
         />
 
-        <div className="mt-4">
-          <Button type="submit" fullWidth loading={isLoading}>
+        <div className="mt-6">
+          <Button type="submit" fullWidth size="lg" loading={isLoading}>
             注册
           </Button>
         </div>

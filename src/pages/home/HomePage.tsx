@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
+import { Plus, ChevronDown, Eye, EyeOff, Wallet } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BillItem } from '../../components/bill';
 import { BillItemSkeleton, Dialog, Button, useToast } from '../../components/ui';
@@ -118,19 +118,20 @@ export function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-light-bg dark:bg-dark-bg safe-area-top">
+      <header className="sticky top-0 z-20 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-lg safe-area-top">
         <div className="px-4 py-4">
           {/* Month Selector */}
           <button
             onClick={() => setShowMonthPicker(!showMonthPicker)}
-            className="flex items-center gap-1 text-lg font-semibold text-light-text dark:text-dark-text"
+            className="flex items-center gap-1.5 text-lg font-semibold text-light-text dark:text-dark-text cursor-pointer"
           >
             {selectedYear}年{selectedMonth}月
-            {showMonthPicker ? (
-              <ChevronUp className="w-5 h-5" />
-            ) : (
+            <motion.div
+              animate={{ rotate: showMonthPicker ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
               <ChevronDown className="w-5 h-5" />
-            )}
+            </motion.div>
           </button>
 
           {/* Month Picker Dropdown */}
@@ -146,7 +147,7 @@ export function HomePage() {
                 <div className="flex items-center justify-center gap-4 mb-3">
                   <button
                     onClick={() => setSelectedDate(selectedYear - 1, selectedMonth)}
-                    className="px-3 py-1 text-sm text-light-text-secondary"
+                    className="px-3 py-1 text-sm text-light-text-secondary cursor-pointer hover:text-light-text dark:hover:text-dark-text transition-colors"
                   >
                     {selectedYear - 1}
                   </button>
@@ -155,7 +156,7 @@ export function HomePage() {
                   </span>
                   <button
                     onClick={() => setSelectedDate(selectedYear + 1, selectedMonth)}
-                    className="px-3 py-1 text-sm text-light-text-secondary"
+                    className="px-3 py-1 text-sm text-light-text-secondary cursor-pointer hover:text-light-text dark:hover:text-dark-text transition-colors"
                     disabled={selectedYear >= new Date().getFullYear()}
                   >
                     {selectedYear + 1}
@@ -170,10 +171,10 @@ export function HomePage() {
                         setSelectedDate(selectedYear, month);
                         setShowMonthPicker(false);
                       }}
-                      className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
                         month === selectedMonth
-                          ? 'bg-cta-blue text-white'
-                          : 'bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text'
+                          ? 'bg-cta-blue text-white shadow-sm'
+                          : 'bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text hover:bg-gray-100 dark:hover:bg-zinc-800'
                       }`}
                     >
                       {month}月
@@ -184,30 +185,32 @@ export function HomePage() {
             )}
           </AnimatePresence>
 
-          {/* Summary Card */}
-          <div className="card mt-4 flex items-center gap-6">
-            <div className="flex-1">
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                支出
-              </p>
-              <p className="text-xl font-bold text-expense-red">
-                {showAmount ? formatAmount(summary?.total_expense || '0') : '****'}
-              </p>
+          {/* Summary Card - Gradient */}
+          <div className="mt-4 bg-gradient-to-br from-cta-blue to-blue-700 dark:from-cta-blue dark:to-blue-900 rounded-2xl p-5 shadow-lg">
+            <div className="flex items-center gap-6">
+              <div className="flex-1">
+                <p className="text-sm text-white/70 mb-1">
+                  支出
+                </p>
+                <p className="text-xl font-bold text-white">
+                  {showAmount ? formatAmount(summary?.total_expense || '0') : '****'}
+                </p>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-white/70 mb-1">
+                  收入
+                </p>
+                <p className="text-xl font-bold text-white">
+                  {showAmount ? formatAmount(summary?.total_income || '0') : '****'}
+                </p>
+              </div>
+              <button
+                onClick={toggleShowAmount}
+                className="p-2 text-white/60 hover:text-white transition-colors cursor-pointer"
+              >
+                {showAmount ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </button>
             </div>
-            <div className="flex-1">
-              <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-1">
-                收入
-              </p>
-              <p className="text-xl font-bold text-income-green">
-                {showAmount ? formatAmount(summary?.total_income || '0') : '****'}
-              </p>
-            </div>
-            <button
-              onClick={toggleShowAmount}
-              className="p-2 text-light-text-secondary dark:text-dark-text-secondary hover:text-light-text dark:hover:text-dark-text transition-colors"
-            >
-              {showAmount ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-            </button>
           </div>
         </div>
       </header>
@@ -223,16 +226,22 @@ export function HomePage() {
           </div>
         ) : bills.length === 0 ? (
           // Empty state
-          <div className="py-20 text-center">
-            <p className="text-light-text-secondary dark:text-dark-text-secondary">
+          <div className="py-20 text-center px-8">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-cta-blue/10 dark:bg-cta-blue/20 flex items-center justify-center">
+              <Wallet className="w-10 h-10 text-cta-blue/60" />
+            </div>
+            <p className="text-lg font-medium text-light-text dark:text-dark-text mb-2">
               本月暂无账单
             </p>
+            <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary mb-6">
+              点击下方按钮开始记录第一笔
+            </p>
             <Button
-              variant="ghost"
-              className="mt-4"
+              variant="primary"
               onClick={() => navigate('/bill/add')}
             >
-              添加第一笔账单
+              <Plus className="w-4 h-4 mr-1.5" />
+              添加账单
             </Button>
           </div>
         ) : (
@@ -240,10 +249,13 @@ export function HomePage() {
           groupedBills.map((group) => (
             <div key={group.date}>
               {/* Date header */}
-              <div className="sticky top-[140px] z-10 px-4 py-2 bg-light-bg dark:bg-dark-bg flex items-center justify-between">
-                <span className="text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
-                  {group.displayDate}
-                </span>
+              <div className="sticky top-[140px] z-10 px-4 py-2.5 bg-light-bg/90 dark:bg-dark-bg/90 backdrop-blur-sm flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cta-blue/60" />
+                  <span className="text-sm font-medium text-light-text dark:text-dark-text">
+                    {group.displayDate}
+                  </span>
+                </div>
                 <span className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
                   {group.totalExpense > 0 && `支出 ${formatAmount(group.totalExpense)}`}
                   {group.totalIncome > 0 && group.totalExpense > 0 && ' / '}
@@ -282,9 +294,10 @@ export function HomePage() {
 
       {/* Floating Add Button */}
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.05 }}
         onClick={() => navigate('/bill/add')}
-        className="fixed right-4 bottom-24 z-50 w-14 h-14 rounded-full bg-cta-blue text-white shadow-lg flex items-center justify-center"
+        className="fixed right-4 bottom-24 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-cta-blue to-blue-600 text-white shadow-fab flex items-center justify-center cursor-pointer transition-shadow duration-200 hover:shadow-xl"
       >
         <Plus className="w-6 h-6" />
       </motion.button>

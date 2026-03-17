@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingDown, TrendingUp, Receipt } from 'lucide-react';
+import { TrendingDown, TrendingUp, Receipt, CalendarDays } from 'lucide-react';
 import { formatAmount } from '../../utils/format';
 
 interface SummaryCardProps {
@@ -21,19 +21,19 @@ export function SummaryCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="card"
+      className="card overflow-hidden"
     >
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5">
         {/* Expense */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
             <TrendingDown className="w-5 h-5 text-expense-red" />
           </div>
-          <div>
-            <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+          <div className="min-w-0">
+            <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
               支出
             </p>
-            <p className="text-lg font-bold text-expense-red">
+            <p className="text-lg font-bold text-expense-red truncate">
               {formatAmount(totalExpense)}
             </p>
           </div>
@@ -41,30 +41,33 @@ export function SummaryCard({
 
         {/* Income */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
             <TrendingUp className="w-5 h-5 text-income-green" />
           </div>
-          <div>
-            <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+          <div className="min-w-0">
+            <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
               收入
             </p>
-            <p className="text-lg font-bold text-income-green">
+            <p className="text-lg font-bold text-income-green truncate">
               {formatAmount(totalIncome)}
             </p>
           </div>
         </div>
 
+        {/* Divider */}
+        <div className="col-span-2 border-t border-gray-100 dark:border-zinc-800/50" />
+
         {/* Balance */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
             <Receipt className="w-5 h-5 text-cta-blue" />
           </div>
-          <div>
-            <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+          <div className="min-w-0">
+            <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
               结余
             </p>
             <p
-              className={`text-lg font-bold ${
+              className={`text-lg font-bold truncate ${
                 balance >= 0 ? 'text-income-green' : 'text-expense-red'
               }`}
             >
@@ -75,16 +78,18 @@ export function SummaryCard({
         </div>
 
         {/* Stats */}
-        <div>
-          <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-            账单数
-          </p>
-          <p className="text-lg font-bold text-light-text dark:text-dark-text">
-            {billCount}笔
-          </p>
-          <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary mt-1">
-            日均 ¥{formatAmount(dailyAverage)}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+            <CalendarDays className="w-5 h-5 text-purple-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+              {billCount}笔账单
+            </p>
+            <p className="text-lg font-bold text-light-text dark:text-dark-text">
+              日均 <span className="text-base">¥</span>{formatAmount(dailyAverage)}
+            </p>
+          </div>
         </div>
       </div>
     </motion.div>

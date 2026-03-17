@@ -28,15 +28,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+      'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
-      primary: 'bg-cta-blue text-white hover:bg-blue-700 focus:ring-cta-blue',
+      primary: 'bg-cta-blue text-white hover:bg-blue-600 active:bg-blue-700 focus:ring-cta-blue/50 shadow-sm hover:shadow-md',
       secondary:
-        'bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-900 focus:ring-gray-500',
+        'bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-900 focus:ring-gray-500/50',
       ghost:
-        'bg-transparent text-light-text dark:text-dark-text hover:bg-gray-100 dark:hover:bg-zinc-900 focus:ring-gray-500',
-      danger: 'bg-expense-red text-white hover:bg-red-600 focus:ring-expense-red',
+        'bg-transparent text-light-text dark:text-dark-text hover:bg-gray-100 dark:hover:bg-zinc-900 focus:ring-gray-500/50',
+      danger: 'bg-expense-red text-white hover:bg-red-600 active:bg-red-700 focus:ring-expense-red/50 shadow-sm hover:shadow-md',
     };
 
     const sizes = {

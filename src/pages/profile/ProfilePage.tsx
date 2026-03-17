@@ -75,18 +75,24 @@ export function ProfilePage() {
       icon: FolderOpen,
       label: '分类管理',
       onClick: () => navigate('/category'),
+      iconBg: 'bg-blue-50 dark:bg-blue-900/20',
+      iconColor: 'text-cta-blue',
     },
     {
       icon: Upload,
       label: '导入账单',
       onClick: () => fileInputRef.current?.click(),
       loading: isImporting,
+      iconBg: 'bg-green-50 dark:bg-green-900/20',
+      iconColor: 'text-income-green',
     },
     {
       icon: theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor,
       label: '主题设置',
       value: themeOptions.find((t) => t.value === theme)?.label,
       onClick: () => setShowThemeDialog(true),
+      iconBg: 'bg-purple-50 dark:bg-purple-900/20',
+      iconColor: 'text-purple-500',
     },
   ];
 
@@ -104,15 +110,15 @@ export function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           className="card flex items-center gap-4"
         >
-          <div className="w-16 h-16 rounded-full bg-cta-blue/10 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cta-blue to-blue-600 flex items-center justify-center shadow-md">
             {user?.avatar_url ? (
               <img
                 src={user.avatar_url}
                 alt={user.nickname}
-                className="w-16 h-16 rounded-full object-cover"
+                className="w-16 h-16 rounded-2xl object-cover"
               />
             ) : (
-              <User className="w-8 h-8 text-cta-blue" />
+              <User className="w-8 h-8 text-white" />
             )}
           </div>
           <div className="flex-1">
@@ -128,19 +134,19 @@ export function ProfilePage() {
 
       {/* Menu */}
       <div className="px-4">
-        <div className="card p-0 divide-y divide-gray-100 dark:divide-zinc-900">
-          {menuItems.map(({ icon: Icon, label, value, onClick, loading }) => (
+        <div className="card p-0 divide-y divide-gray-100 dark:divide-zinc-800/50">
+          {menuItems.map(({ icon: Icon, label, value, onClick, loading, iconBg, iconColor }) => (
             <button
               key={label}
               onClick={onClick}
               disabled={loading}
-              className="flex items-center gap-4 w-full p-4 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900"
+              className="flex items-center gap-4 w-full p-4 transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900 cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center">
+              <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center`}>
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-cta-blue border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Icon className="w-5 h-5 text-light-text-secondary dark:text-dark-text-secondary" />
+                  <Icon className={`w-5 h-5 ${iconColor}`} />
                 )}
               </div>
               <span className="flex-1 text-left text-light-text dark:text-dark-text">
@@ -151,7 +157,7 @@ export function ProfilePage() {
                   {value}
                 </span>
               )}
-              <ChevronRight className="w-5 h-5 text-light-text-secondary dark:text-dark-text-secondary" />
+              <ChevronRight className="w-4 h-4 text-light-text-secondary/50 dark:text-dark-text-secondary/50" />
             </button>
           ))}
         </div>
@@ -175,7 +181,7 @@ export function ProfilePage() {
         </motion.div>
 
         {/* Version */}
-        <p className="mt-8 text-center text-sm text-light-text-secondary dark:text-dark-text-secondary">
+        <p className="mt-8 text-center text-xs text-light-text-secondary/50 dark:text-dark-text-secondary/50">
           Smart Ledger v1.0.0
         </p>
       </div>
@@ -203,7 +209,7 @@ export function ProfilePage() {
                 setTheme(value);
                 setShowThemeDialog(false);
               }}
-              className={`w-full flex items-center gap-3 p-4 rounded-xl transition-colors ${
+              className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 cursor-pointer ${
                 theme === value
                   ? 'bg-cta-blue/10 border-2 border-cta-blue'
                   : 'bg-gray-50 dark:bg-zinc-900 border-2 border-transparent'
